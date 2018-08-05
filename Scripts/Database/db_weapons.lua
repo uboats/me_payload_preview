@@ -73,6 +73,7 @@ CAT_PODS	 	 = 6
 CAT_SHELLS		 = 7	
 CAT_GUN_MOUNT	 = 8	
 CAT_CLUSTER_DESC = 9
+CAT_SERVICE		 = 10 
 -----------------------------------------------
 dofile ("scripts/Database/db_weapons_data.lua")
 -----------------------------------------------
