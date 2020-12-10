@@ -231,6 +231,12 @@ end
 
 
 -- by uboats
+local base = _G
+
+function dbg_print(s)
+    base.print(s)
+end
+    
 function get_weapon_element_by_clsid(clsid) -- not used
 	local lnchr = db.Weapons.ByCLSID[clsid]
 	if lnchr then
@@ -248,18 +254,33 @@ function get_weapon_launcher_by_clsid(clsid)
         end
         
         if lnchr.Elements then
+            Elements_new = {}
             for j, element in pairs(lnchr.Elements) do
                 local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
                 if notadaptor then
                     if element.payload_CLSID then -- use macro clsid
-                        elem_new = get_weapon_element_by_clsid(element.payload_CLSID)
-                        if element.connector_name then
-                            elem_new.connector_name = element.connector_name
+                        elems_new = get_weapon_element_by_clsid(element.payload_CLSID)
+                        if elems_new then
+                            for k, elem_new in pairs(elems_new) do
+                                if elem_new.ShapeName then
+                                    dbg_print("macro clsid: "..element.payload_CLSID.." get "..k.." "..elem_new.ShapeName)
+                                    elem_new.IsAdapter = false
+                                    if element.connector_name then
+                                        elem_new.connector_name = element.connector_name
+                                    end
+                                    Elements_new[#Elements_new + 1] = elem_new
+                                end
+                            end
                         end
-                        lnchr.Elements[j] = elem_new
+                    else
+                        Elements_new[#Elements_new + 1] = element
                     end
+                else
+                    Elements_new[#Elements_new + 1] = element
                 end
             end
+            lnchr.Elements_new = {}
+            lnchr.Elements_new = Elements_new
         end
         
         local attr = lnchr.attribute

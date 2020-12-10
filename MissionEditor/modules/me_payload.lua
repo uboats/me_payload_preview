@@ -122,6 +122,14 @@ end
 -- Создание ?размещение виджетов
 -- Префиксы названий виджетов: t - text, b - button, c - combo, sp - spin, sl - slider, e - edit, d - dial 
 function create(x, y, w, h)
+    
+    -- by uboats
+    for i, pylonobj in pairs(PylonObject) do
+        PylonObject[i].sceneobj = {}
+        PylonObject[i].pattached = 0
+    end
+    -- end by uboats
+    
     window = DialogLoader.spawnDialogFromFile("MissionEditor/modules/dialogs/me_payload_panel.dlg", cdata)
     window:setBounds(x, y, w, h)
     
@@ -364,6 +372,13 @@ function create(x, y, w, h)
 end
 
 function initLiveryPreview()
+    -- by uboats
+    for i, pylonobj in pairs(PylonObject) do
+        PylonObject[i].sceneobj = {}
+        PylonObject[i].pattached = 0
+    end
+    -- end by uboats
+    
 	DSWidget = DemoSceneWidget.new()
 	local x, y, w, h = box.sLiveryPreview:getBounds()    
 	box:insertWidget(DSWidget)
@@ -419,6 +434,13 @@ function initLiveryPreview()
 end
 
 function uninitialize()
+    -- by uboats
+    for i, pylonobj in pairs(PylonObject) do
+        PylonObject[i].sceneobj = {}
+        PylonObject[i].pattached = 0
+    end
+    -- end by uboats
+    
 	if DSWidget ~= nil then
         box:removeWidget(DSWidget)
         DSWidget:destroy()
@@ -564,24 +586,31 @@ function updateOnboardNumber(a_OnboardNumber)
 end
 
 -- by uboats
+function dbg_print(s)
+    base.print(s)
+end
+
 function cleanPylonModel()
     local sceneAPI = DSWidget:getScene()
 
-    for i, pylonobj in pairs(PylonObject) do
-        if #PylonObject[i].sceneobj > 0 then
-            for j, sceobj in pairs(PylonObject[i].sceneobj) do
-                if sceobj ~= nil and sceobj.obj ~= nil then
-                    if PylonObject[i].pattached == 1 then
-                        sceobj:detach()
+    if sceneAPI then
+        for i, pylonobj in pairs(PylonObject) do
+            if #PylonObject[i].sceneobj > 0 then
+                for j, sceobj in pairs(PylonObject[i].sceneobj) do
+                    if sceobj ~= nil and sceobj.valid == true and sceobj.obj ~= nil then
+                        if PylonObject[i].pattached == 1 then
+                            sceobj:detach()
+                            PylonObject[i].pattached = 0
+                        end
+                        sceneAPI.remove(sceobj)
+                    else
                         PylonObject[i].pattached = 0
                     end
-                    sceneAPI.remove(sceobj)
                 end
+                PylonObject[i].sceneobj = {}
             end
-            PylonObject[i].sceneobj = {}
         end
     end
-
 end
 
 function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
@@ -596,18 +625,20 @@ function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
             posy = unitdef.Pylons[i].Y or posy
             posz = unitdef.Pylons[i].Z or posz
         else
-            base.print("payload preview warning: unit Pylons["..i.."] not exist")
+            dbg_print("payload preview warning: unit Pylons["..i.."] not exist")
         end
 
-        if element.Position then
-            lx = element.Position[1] or 0
-            ly = element.Position[2] or 0
-            lz = element.Position[3] or 0
-            posx = posx + lx
-            posy = posy + ly
-            posz = posz + lz
-        else
-            base.print("payload preview warning: element pos not exist")
+        if element then
+            if element.Position then
+                lx = element.Position[1] or 0
+                ly = element.Position[2] or 0
+                lz = element.Position[3] or 0
+                posx = posx + lx
+                posy = posy + ly
+                posz = posz + lz
+            else
+                dbg_print("payload preview warning: element pos not exist")
+            end
         end
 
         PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], posx, posy+base.preview.objectHeight, posz)
@@ -630,7 +661,7 @@ function showPylonModel(a_type, shape)
     local shape2  = U.getShape(unitDef)
 
     if unitDef and shape and shape2 and shape == shape2 then
-        base.print("payload preview aircraft: "..shape)
+        dbg_print("payload preview aircraft: "..shape)
         
         if vdata.unit.payload.pylonslauncher then
             for i, lncher in pairs(vdata.unit.payload.pylonslauncher) do
@@ -642,23 +673,17 @@ function showPylonModel(a_type, shape)
                 
                 -- get aircraft station connector and arg for selected payload
                 if unitDef.Pylons[i] then
-                    arg_id   = unitDef.Pylons[i].arg or -1
-                    arg_val  = unitDef.Pylons[i].arg_value or 0
-                    pcnt     = unitDef.Pylons[i].connector or nil
+                    arg_id   = unitDef.Pylons[i].arg                         or -1
+                    arg_val  = unitDef.Pylons[i].arg_value                   or 0
+                    pcnt     = unitDef.Pylons[i].connector                   or nil
                     use_pcnt = unitDef.Pylons[i].use_full_connector_position or false
                     
                     -- check if aircraft has specific cnt for each pylon loadout
                     for kk, pylonlncher in pairs(unitDef.Pylons[i].Launchers) do
                         if pylonlncher.CLSID == lncher.CLSID then
-                            if pylonlncher.arg then
-                                arg_id  = pylonlncher.arg
-                            end
-                            if pylonlncher.arg_value then
-                                arg_val = pylonlncher.arg_value
-                            end
-                            if pylonlncher.connector then
-                                pcnt    = pylonlncher.connector
-                            end
+                            if pylonlncher.arg       then arg_id  = pylonlncher.arg       end
+                            if pylonlncher.arg_value then arg_val = pylonlncher.arg_value end
+                            if pylonlncher.connector then pcnt    = pylonlncher.connector end
                             break
                         end
                     end
@@ -669,13 +694,11 @@ function showPylonModel(a_type, shape)
                     arg_id = PylonObject[i].arg
                 end
                 if use_pcnt == true then
-                    if pcnt == nil then
-                        pcnt = PylonObject[i].cnt
-                    end
+                    if pcnt == nil then pcnt = PylonObject[i].cnt end
                 end
 
                 if pnt then
-                    base.print("payload preview "..shape..": lncher "..i.." "..pcnt.." arg: "..arg_id.." "..arg_val)
+                    dbg_print("payload preview "..shape..": lncher "..i.." "..pcnt.." arg: "..arg_id.." "..arg_val)
                 end
                 
                 -- draw station arg
@@ -690,36 +713,24 @@ function showPylonModel(a_type, shape)
                     local modelshape = lncher.pfile
                     local numobj     = #PylonObject[i].sceneobj
                     
-                    base.print("payload preview "..shape..": lncher "..i.." pfile branch: "..modelshape)
+                    dbg_print("payload preview "..shape..": lncher "..i.." pfile branch: "..modelshape)
                     
                     tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
                     if tmpobj and tmpobj.valid == true then
-                        PylonObject[i].pattached = 1
-                        PylonObject[i].sceneobj[numobj + 1] = tmpobj
-                        if pcnt then -- attach to connector
-                            PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, pcnt)
-                        else -- attached coord
-                            --base.print(" uboats: unit Pylons["..i.."]")
-                            if unitDef.Pylons[i] then
-                                posx = unitDef.Pylons[i].X or posx
-                                posy = unitDef.Pylons[i].Y or posz
-                                posz = unitDef.Pylons[i].Z or posz
-                            else
-                                base.print("payload preview warning: unit Pylons["..i.."] not exist")
-                            end
-                            PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1],posx,posy+base.preview.objectHeight,posz)
-                        end
+                        --attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
+                        attachPylonModelElement(i, numobj, tmpobj, unitDef, nil, DSWidget.modelObj, pcnt)
+                        
                     else
-                        base.print("payload preview warning: add model failed: "..modelshape)
+                        dbg_print("payload preview warning: add model failed: "..modelshape)
                     end
                 
-                elseif lncher.Elements then -- for normal declare loadout element
-                    base.print("payload preview "..shape..": lncher "..i.." element branch: "..#lncher.Elements)
+                elseif lncher.Elements_new then -- for normal declare loadout element
+                    dbg_print("payload preview "..shape..": lncher "..i.." element branch: "..#lncher.Elements_new)
                 
                     -- first traverse adaptor
                     adaptor_name = ""
                     adaptor_obj = nil
-                    for j, element in pairs(lncher.Elements) do
+                    for j, element in pairs(lncher.Elements_new) do
                         if element.IsAdapter ~= nil and element.IsAdapter == true then
                             if element.ShapeName then
                                 local modelshape = element.ShapeName
@@ -734,29 +745,24 @@ function showPylonModel(a_type, shape)
                                     
                                     break -- find valid adaptor, then break loop
                                 else
-                                    base.print("payload preview warning: add model failed: "..modelshape)
+                                    dbg_print("payload preview warning: add model failed: "..modelshape)
                                 end
                             end
                         end
                     end
                     
                     if adaptor_obj then
-                        base.print("payload preview "..shape..": lncher "..i.." element branch: has adaptor "..adaptor_name)
+                        dbg_print("payload preview "..shape..": lncher "..i.." element branch: has adaptor "..adaptor_name)
                     end
                 
                     -- traverse non adaptor
-                    for j, element in pairs(lncher.Elements) do
+                    for j, element in pairs(lncher.Elements_new) do
                         local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
                         if notadaptor then
                             elem_new = element
                             
-                            --[[if element.payload_CLSID then -- use macro clsid
-                                elem_new = get_weapon_element_by_clsid(element.payload_CLSID)
-                            end]]
-                                
                             if elem_new.ShapeName then -- use explicit element
                                 local posx, posy, posz = 0, 0, 0
-                                
 
                                 local modelshape = nil
                                 local numobj     = #PylonObject[i].sceneobj
@@ -765,7 +771,7 @@ function showPylonModel(a_type, shape)
                                     for tt, shapetbl in pairs(lncher.shape_table_data) do
                                         if shapetbl.name == elem_new.ShapeName then
                                             modelshape = shapetbl.file
-                                            --base.print(i.." lnch find load model: "..modelshape)
+                                            --dbg_print(i.." lnch find load model: "..modelshape)
                                         end
                                     end
                                 end
@@ -780,19 +786,11 @@ function showPylonModel(a_type, shape)
                                     if tmpobj and tmpobj.valid == true then
                                         pobj_new = DSWidget.modelObj
                                         pcnt_new = pcnt
-                                        if pcnt then
-                                            if elem_new.connector_name and elem_new.connector_name ~= "" then
-                                                pcnt_new = elem_new.connector_name
-                                                if adaptor_obj ~= nil then
-                                                    pobj_new = adaptor_obj
-                                                end
-                                            end
-                                        else
-                                            if elem_new.connector_name and elem_new.connector_name ~= "" then
-                                                pcnt_new = elem_new.connector_name
-                                                if adaptor_obj ~= nil then
-                                                    pobj_new = adaptor_obj
-                                                end
+                                        
+                                        if elem_new.connector_name and elem_new.connector_name ~= "" then
+                                            pcnt_new = elem_new.connector_name
+                                            if adaptor_obj ~= nil then
+                                                pobj_new = adaptor_obj
                                             end
                                         end
                                         
@@ -800,7 +798,7 @@ function showPylonModel(a_type, shape)
                                         attachPylonModelElement(i, numobj, tmpobj, unitDef, elem_new, pobj_new, pcnt_new)
                                         
                                     else
-                                        base.print("payload preview warning: add model failed: "..modelshape)
+                                        dbg_print("payload preview warning: add model failed: "..modelshape)
                                     end
 
                                 end
@@ -808,7 +806,7 @@ function showPylonModel(a_type, shape)
                             end -- if element.ShapeName
                         end -- if notadaptor
                                            
-                    end -- pairs(lncher.Elements)                    
+                    end -- pairs(lncher.Elements_new)                    
                 end                
 
             end
@@ -866,9 +864,8 @@ function setPreviewType(a_type)
     
     local sceneAPI = DSWidget:getScene()	
     
-    cleanPylonModel() -- by uboats
-    
     if DSWidget.modelObj ~= nil and DSWidget.modelObj.obj ~= nil then
+        cleanPylonModel() -- by uboats
         sceneAPI.remove(DSWidget.modelObj)
         DSWidget.modelObj = nil
     end
