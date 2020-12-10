@@ -32,26 +32,26 @@ local lastPreviewType
 
 -- by uboats
 local PylonObject = {
-  [1]  = {sceneobj = {}, pattached = 0, arg = 308, argtmp = -1, cnt = "Pylon1"},
-  [2]  = {sceneobj = {}, pattached = 0, arg = 309, argtmp = -1, cnt = "Pylon2"},
-  [3]  = {sceneobj = {}, pattached = 0, arg = 310, argtmp = -1, cnt = "Pylon3"},
-  [4]  = {sceneobj = {}, pattached = 0, arg = 311, argtmp = -1, cnt = "Pylon4"},
-  [5]  = {sceneobj = {}, pattached = 0, arg = 312, argtmp = -1, cnt = "Pylon5"},
-  [6]  = {sceneobj = {}, pattached = 0, arg = 313, argtmp = -1, cnt = "Pylon6"},
-  [7]  = {sceneobj = {}, pattached = 0, arg = 314, argtmp = -1, cnt = "Pylon7"},
-  [8]  = {sceneobj = {}, pattached = 0, arg = 315, argtmp = -1, cnt = "Pylon8"},
-  [9]  = {sceneobj = {}, pattached = 0, arg = 316, argtmp = -1, cnt = "Pylon9"},
-  [10] = {sceneobj = {}, pattached = 0, arg = 317, argtmp = -1, cnt = "Pylon10"},
-  [11] = {sceneobj = {}, pattached = 0, arg = 318, argtmp = -1, cnt = "Pylon11"},
-  [12] = {sceneobj = {}, pattached = 0, arg = 319, argtmp = -1, cnt = "Pylon12"},
-  [13] = {sceneobj = {}, pattached = 0, arg = 320, argtmp = -1, cnt = "Pylon13"},
-  [14] = {sceneobj = {}, pattached = 0, arg = 321, argtmp = -1, cnt = "Pylon14"},
-  [15] = {sceneobj = {}, pattached = 0, arg = 322, argtmp = -1, cnt = "Pylon15"},
-  [16] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon16"},
-  [17] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon17"},
-  [18] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon18"},
-  [19] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon19"},
-  [20] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon20"},
+  [1]  = {sceneobj = {}, pattached = 0, arg = 308, argtmp = -1, cnt = {"Pylon1", "hardpoint-1", "Point Zero "}},
+  [2]  = {sceneobj = {}, pattached = 0, arg = 309, argtmp = -1, cnt = {"Pylon2", "hardpoint-2", "Point Zero 01"}},
+  [3]  = {sceneobj = {}, pattached = 0, arg = 310, argtmp = -1, cnt = {"Pylon3", "hardpoint-3", "Point Zero 02"}},
+  [4]  = {sceneobj = {}, pattached = 0, arg = 311, argtmp = -1, cnt = {"Pylon4", "hardpoint-4", "Point Zero 03"}},
+  [5]  = {sceneobj = {}, pattached = 0, arg = 312, argtmp = -1, cnt = {"Pylon5", "hardpoint-5", "Point Zero 04"}},
+  [6]  = {sceneobj = {}, pattached = 0, arg = 313, argtmp = -1, cnt = {"Pylon6", "hardpoint-6", "Point Zero 05"}},
+  [7]  = {sceneobj = {}, pattached = 0, arg = 314, argtmp = -1, cnt = {"Pylon7", "hardpoint-7", "Point Zero 06"}},
+  [8]  = {sceneobj = {}, pattached = 0, arg = 315, argtmp = -1, cnt = {"Pylon8", "hardpoint-8", "Point Zero 07"}},
+  [9]  = {sceneobj = {}, pattached = 0, arg = 316, argtmp = -1, cnt = {"Pylon9", "hardpoint-9", "Point Zero 08"}},
+  [10] = {sceneobj = {}, pattached = 0, arg = 317, argtmp = -1, cnt = {"Pylon10","hardpoint-10","Point Zero 09"}},
+  [11] = {sceneobj = {}, pattached = 0, arg = 318, argtmp = -1, cnt = {"Pylon11","hardpoint-11","Point Zero 10"}},
+  [12] = {sceneobj = {}, pattached = 0, arg = 319, argtmp = -1, cnt = {"Pylon12","hardpoint-12","Point Zero 11"}},
+  [13] = {sceneobj = {}, pattached = 0, arg = 320, argtmp = -1, cnt = {"Pylon13","hardpoint-13","Point Zero 12"}},
+  [14] = {sceneobj = {}, pattached = 0, arg = 321, argtmp = -1, cnt = {"Pylon14","hardpoint-14","Point Zero 13"}},
+  [15] = {sceneobj = {}, pattached = 0, arg = 322, argtmp = -1, cnt = {"Pylon15","hardpoint-15","Point Zero 14"}},
+  [16] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = {"Pylon16","hardpoint-16","Point Zero 15"}},
+  [17] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = {"Pylon17","hardpoint-17","Point Zero 16"}},
+  [18] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = {"Pylon18","hardpoint-18","Point Zero 17"}},
+  [19] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = {"Pylon19","hardpoint-19","Point Zero 18"}},
+  [20] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = {"Pylon20","hardpoint-20","Point Zero 19"}},
 }
 -- end by uboats
 
@@ -627,12 +627,26 @@ function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
     PylonObject[i].pattached = 1
     PylonObject[i].sceneobj[numobj + 1] = sobj
 
+    local posx, posy, posz = 0, 0, 0
     if pcnt and pobj then
         dbg_print("payload preview: attach to "..pcnt)
         PylonObject[i].sceneobj[numobj + 1]:attachTo(pobj, pcnt)
+        
+        if element then
+            if element.Position then
+                lx = element.Position[1] or 0
+                ly = element.Position[2] or 0
+                lz = element.Position[3] or 0
+                posx = posx + lx
+                posy = posy + ly
+                posz = posz + lz
+            else
+                dbg_print("payload preview warning: element pos not exist")
+            end
+        end
+        
+        PylonObject[i].sceneobj[numobj + 1].transform.move(PylonObject[i].sceneobj[numobj + 1],posx,posy,posz)
     else
-        local posx, posy, posz = 0, 0, 0
-
         if unitdef.Pylons[i] then
             posx = unitdef.Pylons[i].X or posx
             posy = unitdef.Pylons[i].Y or posy
@@ -654,7 +668,15 @@ function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
             end
         end
 
-        PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], posx, posy+base.preview.objectHeight, posz)
+        if DSWidget and DSWidget.modelObj and DSWidget.modelObj.valid == true then
+            local x0,y0,z0,x1,y1,z1 = DSWidget.modelObj:getBBox()
+            --DSWidget.modelObj.transform:setPosition(-(x0+x1)*0.5, base.preview.objectHeight - (y0+y1)*0.5, -(z0+z1)*0.5)
+            posx = posx - (x0+x1)*0.5
+            posy = posy + base.preview.objectHeight - (y0+y1)*0.5
+            posz = posz - (z0+z1)*0.5
+        end
+        
+        PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], posx, posy, posz)
     end
 end
 
@@ -702,7 +724,7 @@ function showPylonModel(a_type, shape)
     local shape2  = U.getShape(unitDef)
 
     if unitDef and shape and shape2 and shape == shape2 then
-        dbg_print("payload preview aircraft: "..shape)
+        dbg_print("payload preview aircraft: "..a_type.." shape "..shape)
         
         if vdata.unit.payload.pylonslauncher then
             for i, lncher in pairs(vdata.unit.payload.pylonslauncher) do
@@ -734,11 +756,23 @@ function showPylonModel(a_type, shape)
                 if arg_id < 0 then
                     arg_id = PylonObject[i].arg
                 end
+                
+                if --[[base.string.match(a_type, "Su-25") or]] base.string.match(a_type, "A-10") then
+                    use_pcnt = true
+                end
                 if use_pcnt == true then
-                    if pcnt == nil then pcnt = PylonObject[i].cnt end
+                    cntid = 1
+                    if base.string.match(a_type, "Su-25") then
+                        cntid = 2
+                    elseif base.string.match(a_type, "A-10") then
+                        cntid = 3
+                    end
+                    if pcnt == nil then
+                        pcnt = PylonObject[i].cnt[cntid]
+                    end
                 end
 
-                if pnt then
+                if pcnt then
                     dbg_print("payload preview "..shape..": lncher "..i.." "..pcnt.." arg: "..arg_id.." "..arg_val)
                 end
                 
