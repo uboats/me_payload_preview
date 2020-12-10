@@ -1,17 +1,3 @@
-function weapons_category(clsid, name, displayName, ...)
-    local cat = {};
-    
-    cat.CLSID = clsid;
-    cat.Name = name;
-    cat.DisplayName = displayName;
-    cat.Launchers = {};
-    for i, v in ipairs(arg) do
-        cat.Launchers[i] = v;
-    end
-    
-    table.insert(db.Weapons.Categories, cat);
-end
-
 function launcher(clsid, name, displayName,params, elements)
     local res		= params
 	res.Weight 		= tonumber(res.Weight)
@@ -19,14 +5,6 @@ function launcher(clsid, name, displayName,params, elements)
     res.displayName = displayName
     res.Elements 	= elements;
 	res.WorldID 	= tonumber(params.WorldID)
-	
---	if wInfo_weapon_data_by_CLSID[clsid] ~= nil then
---		local winfo_data = wInfo_weapon_data_by_CLSID[clsid]
---		for i,o in pairs(winfo_data) do
---			res[i] = o
---		end
---	end
-    
     return res;
 end
 
@@ -39,7 +17,7 @@ function element(shape, x, y, z, ...)
 
 	local t = {	ShapeName = shape,
 			    Position  = {x,y,z},}
-	for i, v in ipairs(arg) do
+	for i, v in ipairs{...} do
 		if t.DrawArgs == nil then
 		   t.DrawArgs = {}
 	   end
@@ -55,25 +33,8 @@ end
 db.Weapons =
 {
 	Categories = {};
-	DefaultCategories = 
-	{	
-		{
-			CLSID = "{60EA8FAC-2EF6-4308-83EA-92AB84BD134F}",
-			Name = "Weapon",
-		}
-	}
 };
------------------------------------------------
-CAT_BOMBS 	     = 1
-CAT_MISSILES     = 2
-CAT_ROCKETS	     = 3 --!unguided!
-CAT_AIR_TO_AIR   = 4
-CAT_FUEL_TANKS   = 5
-CAT_PODS	 	 = 6
-CAT_SHELLS		 = 7	
-CAT_GUN_MOUNT	 = 8	
-CAT_CLUSTER_DESC = 9
-CAT_SERVICE		 = 10 
+
 -----------------------------------------------
 dofile ("scripts/Database/db_weapons_data.lua")
 -----------------------------------------------
@@ -116,7 +77,9 @@ function create_names()
 	end
 	local desc_tables = {weapons_table.weapons.bombs,
 						 weapons_table.weapons.missiles,
-						 weapons_table.weapons.nurs}					 
+						 weapons_table.weapons.nurs,
+						 weapons_table.weapons.torpedoes,
+						 }					 
 	for i,tbl in ipairs(desc_tables) do
 		for nm,desc in pairs(tbl) do	
 			if desc.ws_type ~= nil then
@@ -224,11 +187,13 @@ function collect_available_weapon_resources_wstype()
 	local wstypes = {}
 	
 	local collect = function (wstype)
-		local str_form = wsTypeToString(wstype)
-		if wstypes[str_form] == nil then
-		   if str_form ~= '' and  str_form ~= '0.0.0.0'  then
-			  wstypes[str_form] = wstype
-		   end
+		if wstype ~= nil then
+			local str_form = wsTypeToString(wstype)
+			if wstypes[str_form] == nil then
+			   if str_form ~= '' and  str_form ~= '0.0.0.0'  then
+				  wstypes[str_form] = wstype
+			   end
+			end
 		end
 	end
 	
@@ -242,11 +207,9 @@ function collect_available_weapon_resources_wstype()
 		   else
 				collect(launcher.attribute)
 		   end
-		   collect(launcher.wsTypeOfWeapon or {0,0,0,0})
+		   collect(launcher.wsTypeOfWeapon)
 		else
-		   collect(launcher.wsTypeOfWeapon or 
-				   launcher.attribute or 
-				   {0,0,0,0}) 
+		   collect(launcher.wsTypeOfWeapon or launcher.attribute) 
 		end
 	end
 	
@@ -266,16 +229,6 @@ function collect_available_weapon_resources()
 	return res
 end
 
-function weapon_by_CLSID(clsid)
-	local lnchr = db.Weapons.ByCLSID[clsid]
-	if lnchr then
-		return lnchr.attribute[1],
-			   lnchr.attribute[2],
-			   lnchr.attribute[3],	
-			   lnchr.attribute[4]
-	end
-	return 0,0,0,0
-end
 
 -- by uboats
 function get_weapon_element_by_clsid(clsid) -- not used
@@ -292,6 +245,21 @@ function get_weapon_launcher_by_clsid(clsid)
 	if lnchr and lnchr.attribute then
         if not weapons_names then
            create_names()
+        end
+        
+        if lnchr.Elements then
+            for j, element in pairs(lnchr.Elements) do
+                local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
+                if notadaptor then
+                    if element.payload_CLSID then -- use macro clsid
+                        elem_new = get_weapon_element_by_clsid(element.payload_CLSID)
+                        if element.connector_name then
+                            elem_new.connector_name = element.connector_name
+                        end
+                        lnchr.Elements[j] = elem_new
+                    end
+                end
+            end
         end
         
         local attr = lnchr.attribute

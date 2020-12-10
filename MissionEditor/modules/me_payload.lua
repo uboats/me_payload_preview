@@ -25,41 +25,40 @@ local DemoSceneWidget 	    = require('DemoSceneWidget')
 
 require('i18n').setup(_M)
 
-local WeightWeaponP51D = 260 -- вес оружия P-51D
+local WeightWeaponP51D = 260 -- ве?оруж? P-51D
 
 local DSWidget
 local lastPreviewType
 
 -- by uboats
 local PylonObject = {
-  [1]  = {sceneobj = {}, knowcnter = 0, arg = 308, cnter = "Pylon1"},
-  [2]  = {sceneobj = {}, knowcnter = 0, arg = 309, cnter = "Pylon2"},
-  [3]  = {sceneobj = {}, knowcnter = 0, arg = 310, cnter = "Pylon3"},
-  [4]  = {sceneobj = {}, knowcnter = 0, arg = 311, cnter = "Pylon4"},
-  [5]  = {sceneobj = {}, knowcnter = 0, arg = 312, cnter = "Pylon5"},
-  [6]  = {sceneobj = {}, knowcnter = 0, arg = 313, cnter = "Pylon6"},
-  [7]  = {sceneobj = {}, knowcnter = 0, arg = 314, cnter = "Pylon7"},
-  [8]  = {sceneobj = {}, knowcnter = 0, arg = 315, cnter = "Pylon8"},
-  [9]  = {sceneobj = {}, knowcnter = 0, arg = 316, cnter = "Pylon9"},
-  [10] = {sceneobj = {}, knowcnter = 0, arg = 317, cnter = "Pylon10"},
-  [11] = {sceneobj = {}, knowcnter = 0, arg = 318, cnter = "Pylon11"},
-  [12] = {sceneobj = {}, knowcnter = 0, arg = 319, cnter = "Pylon12"},
-  [13] = {sceneobj = {}, knowcnter = 0, arg = 320, cnter = "Pylon13"},
-  [14] = {sceneobj = {}, knowcnter = 0, arg = 321, cnter = "Pylon14"},
-  [15] = {sceneobj = {}, knowcnter = 0, arg = 322, cnter = "Pylon15"},
-  [16] = {sceneobj = {}, knowcnter = 0, arg = -1, cnter = "Pylon16"},
-  [17] = {sceneobj = {}, knowcnter = 0, arg = -1, cnter = "Pylon17"},
-  [18] = {sceneobj = {}, knowcnter = 0, arg = -1, cnter = "Pylon18"},
-  [19] = {sceneobj = {}, knowcnter = 0, arg = -1, cnter = "Pylon19"},
-  [20] = {sceneobj = {}, knowcnter = 0, arg = -1, cnter = "Pylon20"},
+  [1]  = {sceneobj = {}, pattached = 0, arg = 308, cnt = "Pylon1"},
+  [2]  = {sceneobj = {}, pattached = 0, arg = 309, cnt = "Pylon2"},
+  [3]  = {sceneobj = {}, pattached = 0, arg = 310, cnt = "Pylon3"},
+  [4]  = {sceneobj = {}, pattached = 0, arg = 311, cnt = "Pylon4"},
+  [5]  = {sceneobj = {}, pattached = 0, arg = 312, cnt = "Pylon5"},
+  [6]  = {sceneobj = {}, pattached = 0, arg = 313, cnt = "Pylon6"},
+  [7]  = {sceneobj = {}, pattached = 0, arg = 314, cnt = "Pylon7"},
+  [8]  = {sceneobj = {}, pattached = 0, arg = 315, cnt = "Pylon8"},
+  [9]  = {sceneobj = {}, pattached = 0, arg = 316, cnt = "Pylon9"},
+  [10] = {sceneobj = {}, pattached = 0, arg = 317, cnt = "Pylon10"},
+  [11] = {sceneobj = {}, pattached = 0, arg = 318, cnt = "Pylon11"},
+  [12] = {sceneobj = {}, pattached = 0, arg = 319, cnt = "Pylon12"},
+  [13] = {sceneobj = {}, pattached = 0, arg = 320, cnt = "Pylon13"},
+  [14] = {sceneobj = {}, pattached = 0, arg = 321, cnt = "Pylon14"},
+  [15] = {sceneobj = {}, pattached = 0, arg = 322, cnt = "Pylon15"},
+  [16] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon16"},
+  [17] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon17"},
+  [18] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon18"},
+  [19] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon19"},
+  [20] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon20"},
 }
 -- end by uboats
 
--- Неизменные локализуемые данные (при необходимости, их можно будет вынести в отдельный файл,
--- но IMHO удобнее видеть их прямо здесь, чтобы представлять себе структуру панели)
+-- Неизменные локализуемые данные (пр?необходимост? их можн?буде?вынест??отдельны?файл,
+-- но IMHO удобне?видеть их прямо здес? чтоб?представ?ть себе структур?панели)
 cdata = 
 {
-    vdata_file = base.mainPath..'data/scripts/payload.lua',	-- путь к файлу переменных данных
     fuelTitle = _('INTERNAL FUEL'), 
     percents = '%',
     fuel_weight = _('FUEL WEIGHT'), 
@@ -76,13 +75,12 @@ cdata =
     color_scheme = _('PAINT SCHEME'),
     standard = _('Standard'),
     civil = _('CIVIL PLANE'),
-    bd = _('EXTERNAL HARDPOINTS'),
-    planning_cargo = _('PLANNING CARGO'),
+    bd = _('EXTERNAL HARDPOINTS'),    
     m           = _('m'),
     ropelength  = _('ROPE LENGTH'),
 }
 
--- Переменные загружаемые/сохраняемые данные (путь к файлу - cdata.vdata_file)
+-- Переменные загружаемы?сохраняемые данные (путь ?файл?- cdata.vdata_file)
 vdata =
 {
     balance = 50,
@@ -91,6 +89,7 @@ vdata =
     fuel_weight_max = 5000,
     ammo_weight_max = 0,
     empty = 18000,
+	weightDependent = 0,
     weapons = 0,
     max = 33000,
     total = 20500,
@@ -103,7 +102,6 @@ vdata =
 
 local range = {5, 10, 15, 20, 25, 30}
 
-
 function getAmmoWeight()
     if nil == vdata.ammo_weight_max then
         vdata.ammo_weight_max = 0
@@ -112,8 +110,7 @@ function getAmmoWeight()
 end
 
 function updateTotalWeight()
-    vdata.total = vdata.empty+vdata.fuel_weight + vdata.weapons + 
-            getAmmoWeight()
+    vdata.total = vdata.empty+vdata.fuel_weight + vdata.weapons + vdata.weightDependent + getAmmoWeight()
 	
     total_unitEditBox:setValue(math.floor(0.5 + vdata.total))
     sl_total:setValue(math.min(math.floor(0.5 + 100 * vdata.total / 
@@ -122,14 +119,11 @@ function updateTotalWeight()
                 0.5 + 100 * vdata.total / vdata.max)))
 end
 
--- Создание и размещение виджетов
+-- Создание ?размещение виджетов
 -- Префиксы названий виджетов: t - text, b - button, c - combo, sp - spin, sl - slider, e - edit, d - dial 
 function create(x, y, w, h)
-    window = DialogLoader.spawnDialogFromFile(base.dialogsDir .. "me_payload_panel.dlg", cdata)
+    window = DialogLoader.spawnDialogFromFile("MissionEditor/modules/dialogs/me_payload_panel.dlg", cdata)
     window:setBounds(x, y, w, h)
-
-    -- Загрузка данных из файла
-    load(cdata.vdata_file)
     
     box = window.box
     box:setBounds(0, 0, w, h)
@@ -165,7 +159,8 @@ function create(x, y, w, h)
         fuel_weightEditBox:setValue(vdata.fuel_weight)
         vdata.unit.payload.fuel = vdata.fuel_weight - panel_loadout.vdata.fuel
         updateData()
-        fuel_weightEditBox:setValue(vdata.fuel_weight)
+		--base.print("---updateFuelWeight---",vdata.weightDependent)
+        fuel_weightEditBox:setValue(vdata.fuel_weight + vdata.weightDependent)
         empty_unitEditBox:setValue(vdata.empty)
         weapons_unitEditBox:setValue(math.floor(0.5 + vdata.weapons + getAmmoWeight()))
         maxEditBox:setValue(vdata.max)
@@ -223,12 +218,6 @@ function create(x, y, w, h)
     local t_weapons_unit = box.t_weapons_unit
 
     weapons_unitEditBox = U.createUnitEditBox(t_weapons_unit, e_weapons, U.weightUnits, 1)
-
-	-- Planning cargo ------------------------------------
-	
-	local e_planning_cargo = box.e_planning_cargo
-	local t_planning_cargo_unit = box.t_planning_cargo_unit
-	planning_cargo_max_mas = U.createUnitEditBox(t_planning_cargo_unit, e_planning_cargo, U.weightUnits, 1)
 	
     -- Max-Total -----------------------------------------
     e_max = box.e_max
@@ -267,7 +256,7 @@ function create(x, y, w, h)
         old_et_setText(e_total_prec,a_text)
     end
 
-    -- Данные должны соответствовать типу юнита, но в БД таких данных нет.
+    -- Данные должны соответствоват?типу юнит? но ?БД таки?данных не?
     sp_chaff = box.sp_chaff
     function sp_chaff:onChange()
         local unitDef = DB.unit_by_type[vdata.unit.type]
@@ -300,7 +289,7 @@ function create(x, y, w, h)
     end    
     sp_chaff:addFocusCallback(sp_chaff_onFocus)
 	
-    -- Данные должны соответствовать типу юнита, но в БД таких данных нет.
+    -- Данные должны соответствоват?типу юнит? но ?БД таки?данных не?
     sp_flare = box.sp_flare
     function sp_flare:onChange()
         local unitDef = DB.unit_by_type[vdata.unit.type]
@@ -335,7 +324,7 @@ function create(x, y, w, h)
     
     t_gun = box.t_gun
     
-    -- Данные должны соответствовать типу юнита, но в БД таких данных нет.
+    -- Данные должны соответствоват?типу юнит? но ?БД таки?данных не?
     sp_gun = box.sp_gun
     function sp_gun:onChange()
         vdata.gun = self:getValue()
@@ -370,7 +359,7 @@ function create(x, y, w, h)
 
     initLiveryPreview()
     
-    -- Присвоение виджетам актуальных значений из таблицы vdata
+    -- Присвоение виджетам актуальных значений из таблиц?vdata
     update()
 end
 
@@ -381,7 +370,7 @@ function initLiveryPreview()
     DSWidget:setBounds(x, y, w, h)
     box:updateWidgetsBounds()
 	DSWidget:loadScript('Scripts/DemoScenes/payloadPreview.lua')
-	DSWidget.aspect = w / h --аспект для вычисления вертикального fov
+	DSWidget.aspect = w / h --аспект для вычислен? вертикальног?fov
   
 	DSWidget.updateClipDistances = function()
 		local dist = base.preview.cameraDistance*base.math.exp(base.preview.cameraDistMult)
@@ -468,13 +457,7 @@ function show(b)
     panel_loadout.show(b)
 end
 
--- Загрузка данных из файла
-function load(fName)
-    base.dofile(fName)
-    vdata = base.vdata
-end
-
--- Сохранение данных в файле
+-- Сохранение данных ?файл?
 function save(fName)
     local f = base.io.open(fName, 'w')
     if f then
@@ -490,7 +473,7 @@ function setDefaultLivery(unit)
 
     local group   = unit.boss
     local country = DB.country_by_id[group.boss.id]
-	local schemes = loadLiveries.loadSchemes(unit.type,country.ShortName)
+	local schemes = loadLiveries.loadSchemes(DB.liveryEntryPoint(unit.type),country.ShortName)
     if not schemes then
         return
     end
@@ -516,8 +499,10 @@ function updateLiveries()
     local country = DB.country_by_id[group.boss.id]
 
 	local selectedItem, firstItem
+	
+	local liveryEntryPoint = DB.liveryEntryPoint(vdata.unit.type)
 
-    local schemes = loadLiveries.loadSchemes(vdata.unit.type,country.ShortName)
+    local schemes = loadLiveries.loadSchemes(liveryEntryPoint,country.ShortName)
  
     for k, scheme in pairs(schemes) do
         local item = ListBoxItem.new(scheme.name)
@@ -566,7 +551,7 @@ function updateLiveries()
         setPreviewType(vdata.unit.type, vdata.unit.AddPropAircraft)
         lastPreviewType = vdata.unit.type
     else
-        updatePreviewLivery(vdata.unit.type)        
+        updatePreviewLivery(liveryEntryPoint)        
     end
     updateArguments()
         
@@ -579,16 +564,16 @@ function updateOnboardNumber(a_OnboardNumber)
 end
 
 -- by uboats
-function cleanPylon()
+function cleanPylonModel()
     local sceneAPI = DSWidget:getScene()
 
     for i, pylonobj in pairs(PylonObject) do
         if #PylonObject[i].sceneobj > 0 then
             for j, sceobj in pairs(PylonObject[i].sceneobj) do
                 if sceobj ~= nil and sceobj.obj ~= nil then
-                    if PylonObject[i].knowcnter == 1 then
+                    if PylonObject[i].pattached == 1 then
                         sceobj:detach()
-                        PylonObject[i].knowcnter = 0
+                        PylonObject[i].pattached = 0
                     end
                     sceneAPI.remove(sceobj)
                 end
@@ -599,317 +584,233 @@ function cleanPylon()
 
 end
 
-function showPylon(a_type, shape)
+function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
+    PylonObject[i].pattached = 1
+    PylonObject[i].sceneobj[numobj + 1] = sobj
 
-    local unitDef = DB.unit_by_type[a_type]    
+    if pcnt and pobj then
+        PylonObject[i].sceneobj[numobj + 1]:attachTo(pobj, pcnt)
+    else
+        if unitdef.Pylons[i] then
+            posx = unitdef.Pylons[i].X or posx
+            posy = unitdef.Pylons[i].Y or posy
+            posz = unitdef.Pylons[i].Z or posz
+        else
+            base.print("payload preview warning: unit Pylons["..i.."] not exist")
+        end
+
+        if element.Position then
+            lx = element.Position[1] or 0
+            ly = element.Position[2] or 0
+            lz = element.Position[3] or 0
+            posx = posx + lx
+            posy = posy + ly
+            posz = posz + lz
+        else
+            base.print("payload preview warning: element pos not exist")
+        end
+
+        PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], posx, posy+base.preview.objectHeight, posz)
+    end
+end
+
+function showPylonModel(a_type, shape)
+    
+    if DSWidget.modelObj == nil then
+        return
+    end
+    
     local sceneAPI = DSWidget:getScene()
+    
+    if sceneAPI == nil then
+        return
+    end
+    
+    local unitDef = DB.unit_by_type[a_type]  
+    local shape2  = U.getShape(unitDef)
 
-    if shape then
-
-        --if vdata.unit.payload.pylonselement and shape == prevacshape then
-        if vdata.unit.payload.pylonslauncher and shape == lastPreviewType then
+    if unitDef and shape and shape2 and shape == shape2 then
+        base.print("payload preview aircraft: "..shape)
+        
+        if vdata.unit.payload.pylonslauncher then
             for i, lncher in pairs(vdata.unit.payload.pylonslauncher) do
             
-                local arg_id = unitDef.Pylons[i].arg or -1
-                local arg_val = unitDef.Pylons[i].arg_value or 0
+                arg_id   = -1
+                arg_val  = 0
+                pcnt     = nil
+                use_pcnt = false
                 
-                -- get parent connector (attach to station)
-                local pcnt = unitDef.Pylons[i].connector or nil
+                -- get aircraft station connector and arg for selected payload
                 if unitDef.Pylons[i] then
+                    arg_id   = unitDef.Pylons[i].arg or -1
+                    arg_val  = unitDef.Pylons[i].arg_value or 0
+                    pcnt     = unitDef.Pylons[i].connector or nil
+                    use_pcnt = unitDef.Pylons[i].use_full_connector_position or false
+                    
+                    -- check if aircraft has specific cnt for each pylon loadout
                     for kk, pylonlncher in pairs(unitDef.Pylons[i].Launchers) do
-                        if pylonlncher.CLSID == lncher.CLSID and pylonlncher.connector then
-                            pcnt = pylonlncher.connector
-                            arg_id = pylonlncher.arg or arg_id
-                            arg_val = pylonlncher.arg_value or arg_val
-                            base.print(" lncher "..i.." parent cnt: "..pcnt)
+                        if pylonlncher.CLSID == lncher.CLSID then
+                            if pylonlncher.arg then
+                                arg_id  = pylonlncher.arg
+                            end
+                            if pylonlncher.arg_value then
+                                arg_val = pylonlncher.arg_value
+                            end
+                            if pylonlncher.connector then
+                                pcnt    = pylonlncher.connector
+                            end
                             break
                         end
                     end
                 end
                 
-                if lncher.pfile and lncher.pfile ~= "" then
+                -- try to fix
+                if arg_id < 0 then
+                    arg_id = PylonObject[i].arg
+                end
+                if use_pcnt == true then
+                    if pcnt == nil then
+                        pcnt = PylonObject[i].cnt
+                    end
+                end
+
+                if pnt then
+                    base.print("payload preview "..shape..": lncher "..i.." "..pcnt.." arg: "..arg_id.." "..arg_val)
+                end
+                
+                -- draw station arg
+                if arg_id > 0 then
+                    DSWidget.modelObj:setArgument(arg_id, arg_val)
+                end
+                
+                -- add and attach loadout model
+                if lncher.pfile and lncher.pfile ~= "" then -- for sht table element shape
                     local posx, posy, posz = 0, 0, 0
 
                     local modelshape = lncher.pfile
-                    local numobj = #PylonObject[i].sceneobj
+                    local numobj     = #PylonObject[i].sceneobj
                     
-                    if pcnt then
-                        PylonObject[i].knowcnter = 1
-                        PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                        PylonObject[i].sceneobj[numobj + 1]:setArgument(arg_id,arg_val)
-
-                        if PylonObject[i].sceneobj[numobj + 1].valid == true then
+                    base.print("payload preview "..shape..": lncher "..i.." pfile branch: "..modelshape)
+                    
+                    tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
+                    if tmpobj and tmpobj.valid == true then
+                        PylonObject[i].pattached = 1
+                        PylonObject[i].sceneobj[numobj + 1] = tmpobj
+                        if pcnt then -- attach to connector
                             PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, pcnt)
-                            PylonObject[i].sceneobj[numobj + 1].transform:setPosition(posx,posy,posz)
-                        end
-                    else
-                        PylonObject[i].knowcnter = 1
-                        PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                        PylonObject[i].sceneobj[numobj + 1]:setArgument(arg_id,arg_val)
-
-                        if PylonObject[i].sceneobj[numobj + 1].valid == true then
-                            --PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, "")
-                            base.print(" uboats: unit pylon idx "..i)
+                        else -- attached coord
+                            --base.print(" uboats: unit Pylons["..i.."]")
                             if unitDef.Pylons[i] then
                                 posx = unitDef.Pylons[i].X or posx
                                 posy = unitDef.Pylons[i].Y or posz
                                 posz = unitDef.Pylons[i].Z or posz
                             else
-                                base.print(" uboats warning: unit pylon idx "..i.." not exist")
+                                base.print("payload preview warning: unit Pylons["..i.."] not exist")
                             end
-                            
-                            local x0,y0,z0,x1,y1,z1 = DSWidget.modelObj:getBBox()
-                            PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], -(x0+x1)*0.5, base.preview.objectHeight-(y0+y1)*0.5, -(z0+z1)*0.5)
-                            PylonObject[i].sceneobj[numobj + 1].transform.move(PylonObject[i].sceneobj[numobj + 1],posx,posy,posz)
-                            
+                            PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1],posx,posy+base.preview.objectHeight,posz)
                         end
+                    else
+                        base.print("payload preview warning: add model failed: "..modelshape)
                     end
                 
-                elseif lncher.Elements then
-                    
+                elseif lncher.Elements then -- for normal declare loadout element
+                    base.print("payload preview "..shape..": lncher "..i.." element branch: "..#lncher.Elements)
+                
+                    -- first traverse adaptor
+                    adaptor_name = ""
+                    adaptor_obj = nil
                     for j, element in pairs(lncher.Elements) do
-                        if element.ShapeName then
-                            local posx, posy, posz = 0, 0, 0
-                            local pylonname = nil
-                            local numobj = #PylonObject[i].sceneobj
-
-                            local modelshape = nil
-                            if lncher.shape_table_data then
-                                for tt, shapetbl in pairs(lncher.shape_table_data) do
-                                    if shapetbl.name == element.ShapeName then
-                                        modelshape = shapetbl.file
-                                        --base.print(i.." lnch find load model: "..modelshape)
-                                    end
-                                end
-                            end
-                            
-                            if not modelshape then
-                                modelshape = element.ShapeName or lncher.cfile
-                            end
-                            
-                            if modelshape ~= 'smoke_pod' then -- for c-101 smoke pod, wait for aviodev fix
-                                if pcnt then
-                                    PylonObject[i].knowcnter = 1
-                                    PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                                    PylonObject[i].sceneobj[numobj + 1]:setArgument(PylonObject[i].arg,0)
-
-                                    if PylonObject[i].sceneobj[numobj + 1].valid == true then
-                                        PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, pcnt)
-                                        if element.Position then
-                                            posx = element.Position[1]
-                                            posy = element.Position[2]
-                                            posz = element.Position[3]
-                                        else
-                                            base.print(" uboats warning: element pos not exist")
-                                        end
-                                        PylonObject[i].sceneobj[numobj + 1].transform:setPosition(posx,posy,posz)
-                                    end
-                                else
-                                    PylonObject[i].knowcnter = 1
-                                    PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                                    PylonObject[i].sceneobj[numobj + 1]:setArgument(PylonObject[i].arg,0)
-
-                                    if PylonObject[i].sceneobj[numobj + 1].valid == true then
-                                        --PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, "")
-                                        if unitDef.Pylons[i] then
-                                            posx = unitDef.Pylons[i].X or posx
-                                            posy = unitDef.Pylons[i].Y or posy
-                                            posz = unitDef.Pylons[i].Z or posz
-                                        else
-                                            base.print(" uboats warning: unit pylon idx "..i.." not exist")
-                                        end
-                                        
-                                        if element.Position then
-                                            lx = element.Position[1] or 0
-                                            ly = element.Position[2] or 0
-                                            lz = element.Position[3] or 0
-                                            posx = posx + lx
-                                            posy = posy + ly
-                                            posz = posz + lz
-                                        else
-                                            base.print(" uboats warning: element pos not exist")
-                                        end
-                                        --local x0,y0,z0,x1,y1,z1 = PylonObject[i].sceneobj[numobj + 1]:getBBox()
-                                        
-                                        local x0,y0,z0,x1,y1,z1 = DSWidget.modelObj:getBBox()
-                                        PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], -(x0+x1)*0.5, base.preview.objectHeight-(y0+y1)*0.5, -(z0+z1)*0.5)
-                                        PylonObject[i].sceneobj[numobj + 1].transform.move(PylonObject[i].sceneobj[numobj + 1],posx,posy,posz)
-                                        
-                                    end
-                                end
+                        if element.IsAdapter ~= nil and element.IsAdapter == true then
+                            if element.ShapeName then
+                                local modelshape = element.ShapeName
+                                local numobj     = #PylonObject[i].sceneobj
                                 
-                            end -- if modelshape ~= 'smoke_pod'
-                            
-                        end -- if element.ShapeName                    
-                    end -- pairs(lncher.Elements)                    
-                end                
-
-                if false then
-                if lncher.pfile then
-                    local find = 0
-                    if lncher.pfile ~= "" then
-                        local numobj = #PylonObject[i].sceneobj
-                        local pylonname = nil
-
-                        --[[
-                        if unitDef.Pylons[i] then
-                            for kk, pylonlncher in pairs(unitDef.Pylons[i].Launchers) do
-                                if pylonlncher.connector and pylonlncher.CLSID == lncher.CLSID then
-                                    pylonname = pylonlncher.connector
-                                    base.print(i.." lnch cnter: "..pylonname)
-                                    break
+                                adaptor_obj = sceneAPI:addModel(modelshape, 0, 0, 0)
+                                if adaptor_obj and adaptor_obj.valid == true then
+                                    adaptor_name = modelshape
+                                    
+                                    --attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
+                                    attachPylonModelElement(i, numobj, adaptor_obj, unitDef, element, DSWidget.modelObj, pcnt)
+                                    
+                                    break -- find valid adaptor, then break loop
+                                else
+                                    base.print("payload preview warning: add model failed: "..modelshape)
                                 end
                             end
                         end
-                        ]]
-                        
-                        --if not pylonname then pylonname = 'haha' end
-                        --base.print("  "..i..": "..element.ShapeName.." "..pylonname)
-                        local posx = 0
-                        local posy = 0
-                        local posz = 0
-
-                        local modelshape = lncher.pfile
-                        
-                        --if modelshape ~= 'smoke_pod' then -- for c-101 smoke pod
-                            if pylonname then
-                                PylonObject[i].knowcnter = 1
-                                PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                                PylonObject[i].sceneobj[numobj + 1]:setArgument(PylonObject[i].arg,0)
-
-                                if PylonObject[i].sceneobj[numobj + 1].valid == true then
-                                    PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, pylonname)
-                                    --[[if element.Position then
-                                    posx = element.Position[1]
-                                    posy = element.Position[2]
-                                    posz = element.Position[3]
-                                    end]]
-                                    PylonObject[i].sceneobj[numobj + 1].transform:setPosition(posx,posy,posz)
-                                end
-                            else
-                                PylonObject[i].knowcnter = 1
-                                PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                                PylonObject[i].sceneobj[numobj + 1]:setArgument(PylonObject[i].arg,0)
-
-                                if PylonObject[i].sceneobj[numobj + 1].valid == true then
-                                    --PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, "")
-                                    base.print(" uboats: unit pylon idx "..i)
-                                    if unitDef.Pylons[i] then
-                                        posx = unitDef.Pylons[i].X
-                                        posy = unitDef.Pylons[i].Y
-                                        posz = unitDef.Pylons[i].Z
-                                    else
-                                        base.print(" uboats warning: unit pylon idx "..i.." not exist")
-                                    end
-                                    --[[if element.Position and 1 then
-                                        posx = posx + element.Position[1]
-                                        posy = posy + element.Position[2]
-                                        posz = posz + element.Position[3]
-                                    end]]
-                                    --local x0,y0,z0,x1,y1,z1 = PylonObject[i].sceneobj[numobj + 1]:getBBox()
-                                    local x0,y0,z0,x1,y1,z1 = DSWidget.modelObj:getBBox()
-                                    PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], -(x0+x1)*0.5, base.preview.objectHeight-(y0+y1)*0.5, -(z0+z1)*0.5)
-                                    PylonObject[i].sceneobj[numobj + 1].transform.move(PylonObject[i].sceneobj[numobj + 1],posx,posy,posz)
-                                end
-                            end
-                            
-                        --end -- if modelshape ~= 'smoke_pod'                        
-                        
-                        find = 1
                     end
                     
-                    -- old method
-                    if lncher.Elements and find == 0 then
-                        for j, element in pairs(lncher.Elements) do
-                            if element.ShapeName then
-                                local numobj = #PylonObject[i].sceneobj
-                                local pylonname = nil
-
-                                --[[
-                                if unitDef.Pylons[i] then
-                                    for kk, pylonlncher in pairs(unitDef.Pylons[i].Launchers) do
-                                        if pylonlncher.connector and pylonlncher.CLSID == lncher.CLSID then
-                                            pylonname = pylonlncher.connector
-                                            base.print(i.." lnch cnter: "..pylonname)
-                                            break
-                                        end
-                                    end
-                                end
-                                ]]
+                    if adaptor_obj then
+                        base.print("payload preview "..shape..": lncher "..i.." element branch: has adaptor "..adaptor_name)
+                    end
+                
+                    -- traverse non adaptor
+                    for j, element in pairs(lncher.Elements) do
+                        local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
+                        if notadaptor then
+                            elem_new = element
+                            
+                            --[[if element.payload_CLSID then -- use macro clsid
+                                elem_new = get_weapon_element_by_clsid(element.payload_CLSID)
+                            end]]
                                 
-                                --if not pylonname then pylonname = 'haha' end
-                                --base.print("  "..i..": "..element.ShapeName.." "..pylonname)
-                                local posx = 0
-                                local posy = 0
-                                local posz = 0
+                            if elem_new.ShapeName then -- use explicit element
+                                local posx, posy, posz = 0, 0, 0
+                                
 
                                 local modelshape = nil
+                                local numobj     = #PylonObject[i].sceneobj
+                                
                                 if lncher.shape_table_data then
                                     for tt, shapetbl in pairs(lncher.shape_table_data) do
-                                        if shapetbl.name == element.ShapeName then
+                                        if shapetbl.name == elem_new.ShapeName then
                                             modelshape = shapetbl.file
                                             --base.print(i.." lnch find load model: "..modelshape)
                                         end
                                     end
                                 end
+
                                 if not modelshape then
-                                    modelshape = element.ShapeName
+                                    modelshape = elem_new.ShapeName or lncher.cfile
                                 end
-                                
-                                if modelshape ~= 'smoke_pod' then -- for c-101 smoke pod
-                                    if pylonname then
-                                        PylonObject[i].knowcnter = 1
-                                        PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                                        PylonObject[i].sceneobj[numobj + 1]:setArgument(PylonObject[i].arg,0)
 
-                                        if PylonObject[i].sceneobj[numobj + 1].valid == true then
-                                            PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, pylonname)
-                                            if element.Position then
-                                                posx = element.Position[1]
-                                                posy = element.Position[2]
-                                                posz = element.Position[3]
-                                            else
-                                                base.print(" uboats warning: element pos not exist")
+                                if modelshape ~= nil then
+                                    tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
+
+                                    if tmpobj and tmpobj.valid == true then
+                                        pobj_new = DSWidget.modelObj
+                                        pcnt_new = pcnt
+                                        if pcnt then
+                                            if elem_new.connector_name and elem_new.connector_name ~= "" then
+                                                pcnt_new = elem_new.connector_name
+                                                if adaptor_obj ~= nil then
+                                                    pobj_new = adaptor_obj
+                                                end
                                             end
-                                            PylonObject[i].sceneobj[numobj + 1].transform:setPosition(posx,posy,posz)
+                                        else
+                                            if elem_new.connector_name and elem_new.connector_name ~= "" then
+                                                pcnt_new = elem_new.connector_name
+                                                if adaptor_obj ~= nil then
+                                                    pobj_new = adaptor_obj
+                                                end
+                                            end
                                         end
+                                        
+                                        --attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
+                                        attachPylonModelElement(i, numobj, tmpobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                        
                                     else
-                                        PylonObject[i].knowcnter = 1
-                                        PylonObject[i].sceneobj[numobj + 1] = sceneAPI:addModel(modelshape, 0, base.preview.objectHeight, 0)
-                                        PylonObject[i].sceneobj[numobj + 1]:setArgument(PylonObject[i].arg,0)
-
-                                        if PylonObject[i].sceneobj[numobj + 1].valid == true then
-                                            --PylonObject[i].sceneobj[numobj + 1]:attachTo(DSWidget.modelObj, "")
-                                            if unitDef.Pylons[i] then
-                                                posx = unitDef.Pylons[i].X
-                                                posy = unitDef.Pylons[i].Y
-                                                posz = unitDef.Pylons[i].Z
-                                            else
-                                                base.print(" uboats warning: unit pylon idx "..i.." not exist")
-                                            end
-                                            
-                                            if element.Position then
-                                                posx = posx + element.Position[1]
-                                                posy = posy + element.Position[2]
-                                                posz = posz + element.Position[3]
-                                            else
-                                                base.print(" uboats warning: element pos not exist")
-                                            end
-                                            --local x0,y0,z0,x1,y1,z1 = PylonObject[i].sceneobj[numobj + 1]:getBBox()
-                                            local x0,y0,z0,x1,y1,z1 = DSWidget.modelObj:getBBox()
-                                            PylonObject[i].sceneobj[numobj + 1].transform.setPosition(PylonObject[i].sceneobj[numobj + 1], -(x0+x1)*0.5, base.preview.objectHeight-(y0+y1)*0.5, -(z0+z1)*0.5)
-                                            PylonObject[i].sceneobj[numobj + 1].transform.move(PylonObject[i].sceneobj[numobj + 1],posx,posy,posz)
-                                        end
+                                        base.print("payload preview warning: add model failed: "..modelshape)
                                     end
-                                    
-                                end -- if modelshape ~= 'smoke_pod'
-                                
-                            end -- if element.ShapeName                    
-                        end -- pairs(lncher.Elements)
-                    end -- if lncher.Elements and find == 0
-                    
-                end -- if lncher.pfile
-                end
+
+                                end
+
+                            end -- if element.ShapeName
+                        end -- if notadaptor
+                                           
+                    end -- pairs(lncher.Elements)                    
+                end                
+
             end
         end
         
@@ -924,8 +825,17 @@ function updatePreviewLivery(a_type)
         end
         
         -- by uboats
-        cleanPylon()        
-        showPylon(a_type, lastPreviewType)
+        cleanPylonModel()
+        local unitDef = DB.unit_by_type[a_type]
+        if unitDef then
+            local shape = U.getShape(unitDef)
+            if shape then
+                showPylonModel(a_type, shape)
+            else
+                showPylonModel(a_type, lastPreviewType)
+            end
+        end
+        --showPylon(a_type, lastPreviewType)
         -- end by uboats
     end
 end
@@ -935,9 +845,9 @@ function updateArguments()
     if DSWidget and DSWidget.modelObj and AddPropAircraft then
         if vdata.unit.type == "Mi-8MT" then
             if AddPropAircraft.CargoHalfdoor == true then
-                DSWidget.modelObj:setArgument(250,0) -- дверь
+                DSWidget.modelObj:setArgument(250,0) -- двер?
             else
-                DSWidget.modelObj:setArgument(250,1) -- дверь
+                DSWidget.modelObj:setArgument(250,1) -- двер?
             end
             
             if AddPropAircraft.AdditionalArmor == true then
@@ -950,11 +860,13 @@ function updateArguments()
 end
 
 function setPreviewType(a_type)
-    local unitDef = DB.unit_by_type[a_type]
+    local unitDef 			= DB.unit_by_type[a_type]
+	local liveryEntryPoint  = unitDef.livery_entry or a_type
+	
     
     local sceneAPI = DSWidget:getScene()	
     
-    cleanPylon() -- by uboats
+    cleanPylonModel() -- by uboats
     
     if DSWidget.modelObj ~= nil and DSWidget.modelObj.obj ~= nil then
         sceneAPI.remove(DSWidget.modelObj)
@@ -966,18 +878,18 @@ function setPreviewType(a_type)
     if shape then  
 		DSWidget.modelObj = sceneAPI:addModel(shape, 0, base.preview.objectHeight, 0)
         
-        showPylon(a_type, shape) -- by uboats
+        showPylonModel(a_type, shape) -- by uboats
         
         if vdata.livery_id then
-            DSWidget.modelObj:setLivery(vdata.livery_id,a_type)
+            DSWidget.modelObj:setLivery(vdata.livery_id,liveryEntryPoint)
         end       
         
         if DSWidget.modelObj.valid == true then
             DSWidget.modelObj:setAircraftBoardNumber(base.panel_aircraft.getCurOnboardNumber())
             DSWidget.modelRadius 	= DSWidget.modelObj:getRadius()
             local x0,y0,z0,x1,y1,z1 = DSWidget.modelObj:getBBox()
-            DSWidget.modelObj.transform:setPosition(-(x0+x1)*0.5, base.preview.objectHeight - (y0+y1)*0.5, -(z0+z1)*0.5) --выравниваем по центру баундинг бокса
-            -- считаем тангенс половины вертиального fov
+            DSWidget.modelObj.transform:setPosition(-(x0+x1)*0.5, base.preview.objectHeight - (y0+y1)*0.5, -(z0+z1)*0.5) --выравнивае?по центру баундинг бокс?
+            -- считае?танген?половины вертиального fov
             -- local vFovTan = base.math.tan(base.math.rad(base.cameraFov*0.5)) / DSWidget.aspect
             -- base.cameraRadius = DSWidget.modelRadius / vFovTan  --base.math.tan(vFov)
             base.preview.cameraDistMult = 0
@@ -994,7 +906,7 @@ function updateData()
     vdata.weapons = panel_loadout.vdata.weight
 
     if vdata.unit then
-		-- костыль для гражданского 'P-51D'--------------------------
+		-- костыл?для гражданского 'P-51D'--------------------------
 		if (vdata.unit.type == 'P-51D') then  
 			cb_civil:setVisible(true)						
 		else
@@ -1046,15 +958,15 @@ function updateData()
         end
         vdata.fuel = math.floor(0.5 + 100 * (vdata.fuel_weight - fuelWeight) / vdata.fuel_weight_max)
         
-        local weightDependent = panel_paramFM.getWeightDependentOfFuel()      
-        weightDependent = weightDependent * base.math.min(1.0, 0.1 + (vdata.fuel/100))   
-        vdata.empty = unitDef.EmptyWeight + panel_paramFM.getWeight() + weightDependent
+        local weightDependent = panel_paramFM.getWeightDependentOfFuel(vdata.unit)  
+        vdata.weightDependent = weightDependent * base.math.min(1.0, 0.1 + (vdata.fuel/100))  
+        vdata.empty = unitDef.EmptyWeight + panel_paramFM.getWeight()
         
         if vdata.unit.hardpoint_racks == false then
             vdata.empty = vdata.empty - (unitDef.HardpointRacksWeight or 0)
         end
         
-		if (vdata.unit.civil_plane == true) then  -- костыль для гражданского 'P-51D'
+		if (vdata.unit.civil_plane == true) then  -- костыл?для гражданского 'P-51D'
 			vdata.empty = unitDef.EmptyWeight - WeightWeaponP51D
 		end
         
@@ -1101,7 +1013,7 @@ function updateData()
 				c_ammo_type:setText(unit.ammo_type[vdata.unit.payload.ammo_type])
 			else
 				c_ammo_type:setText(unit.ammo_type[1])
-				vdata.unit.payload.ammo_type = 1
+				vdata.unit.payload.ammo_type = unit.ammo_type_default or 1
 			end
 			
 			c_ammo_type:setVisible(true)
@@ -1111,11 +1023,6 @@ function updateData()
 			c_ammo_type:setVisible(false)
 			t_ammo_type:setVisible(false)
 		end
-		
-		--
-		
-		planning_cargo_max_mas:setValue(actionParamPanels.GroupsForEmbarking:getMaxWieghtOfAllTasks(vdata.unit))
-
     else
         sp_flare:setEnabled(false)
         sp_chaff:setEnabled(false)
@@ -1126,14 +1033,14 @@ function updateData()
     updateTotalWeight()
 end
 
--- Обновление значений виджетов после изменения таблицы vdata
+-- Обновление значений виджетов посл?изменения таблиц?vdata
 function update()
     updateData()
     
     sl_fuel:setValue(vdata.fuel)
     e_fuel:setText(tostring(vdata.fuel))
     
-    fuel_weightEditBox:setValue(vdata.fuel_weight)
+    fuel_weightEditBox:setValue(vdata.fuel_weight + vdata.weightDependent)
     empty_unitEditBox:setValue(vdata.empty)
     weapons_unitEditBox:setValue(math.floor(0.5 + vdata.weapons + getAmmoWeight()))
     maxEditBox:setValue(vdata.max)
@@ -1151,12 +1058,12 @@ function setPositionWidgets()
     local unitDef = DB.unit_by_type[vdata.unit.type]
     
     if unitDef.Guns ~= nil then
-        -- показываем пушку
+        -- показываем пушк?
         offsetY = 324     
     end
     
     if (unitDef.ammo_type ~= nil) then
-        -- показываем тип патронов
+        -- показываем ти?патронов
         offsetY = 349  
     end
 
@@ -1212,10 +1119,10 @@ function updateVisibleRope()
 
 end
 
--- возвращает юнит по его имени
+-- возвращает юнит по ег?имен?
 function getUnitByName(unitName)
   local result = nil
-  -- сначала ищем в самолетах
+  -- сначал?ищем ?самолета?
   for _tmp, unit in pairs(DB.db.Units.Planes.Plane) do
     if unitName == unit.Name then
       result = unit
@@ -1224,7 +1131,7 @@ function getUnitByName(unitName)
   end
   
   if not result then
-    -- если не нашли в самолетах, ищем в вертолетах
+    -- если не нашл??самолета? ищем ?вертолетах
     for _tmp, unit in pairs(DB.db.Units.Helicopters.Helicopter) do
       if unitName == unit.Name then
         result = unit

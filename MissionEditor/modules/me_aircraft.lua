@@ -18,12 +18,13 @@ local ListBoxItem				= require('ListBoxItem')
 local MsgWindow					= require('MsgWindow')
 local DialogLoader				= require('DialogLoader')
 local CoalitionController		= require('Mission.CoalitionController')
+local MeSettings      			= require('MeSettings')
 
--- Модуль сериализации таблицы
+-- Модуль сериализации таблиц?
 local S = 						require('Serializer')
 
 -- Модули Black Shark
-local U = 						require('me_utilities')	-- Утилиты создания типовых виджетов
+local U = 						require('me_utilities')	-- Утилит?создан? типовы?виджетов
 local crutches = 				require('me_crutches')  -- temporary crutches
 local MapWindow = 				require('me_map_window')
 local i18n = 					require('i18n')
@@ -40,6 +41,7 @@ local panel_targeting = 		require('me_targeting')
 local panel_summary = 			require('me_summary')
 local panel_radio = 			require('me_panelRadio')
 local panel_paramFM           = require('me_paramFM')
+local panel_dataCartridge 	  = require('me_dataCartridge')
 local panel_wpt_properties = 	require('me_wpt_properties')
 local panel_loadout = 			require('me_loadout')
 local toolbar = 				require('me_toolbar')
@@ -53,6 +55,10 @@ local panel_static			    = require('me_static')
 local panel_vehicle			    = require('me_vehicle')
 local mod_parking               = require('me_parking')
 local UC				        = require('utils_common')
+local CoalitionData				= require('Mission.CoalitionData')
+local Skin              		= require('Skin')
+local editorManager          	= require('me_editorManager')
+local ProductType 				= require('me_ProductType') 
 
 local taskItemSkin
 local defaultTaskItemSkin
@@ -76,53 +82,60 @@ __view__  = __views__[1]
 			[ __views__[1] ] = _('HELICOPTER GROUP'),
 			[ __views__[2] ] = _('AIRPLANE GROUP'),
 			},
-		condition = _('CONDITION'),
-		probability = _('%'),
-		country = _('COUNTRY'), 
-		name = _('NAME'),
-		task = _('TASK'),
-		nothing = _('Nothing'),
-		unit = _('UNIT'), 
-		unit_of = _('OF'),     
-		type = _('TYPE'), 
-		hidden = _('HIDDEN ON MAP'),
-		uncontrolled = _('UNCONTROLLED'),
-		lateActivation = _('LATE ACTIVATION'),
-		pilot = _('PILOT'),
-		pilotList = { _('Pilot #001'), _('Pilot #002'), _('Pilot #003'), _('Pilot #004') },
-		skill = _('SKILL'),
-		onboard_num = _('ONBOARD'),
-		callsign = _('CALLSIGN'),
-        HEADING = _('HEADING'),
-		comm = _('COMM'),
-		MHz = _('MHz'),
-		invalidFreq = _('Invalid frequency'),
+		condition 			= _('CONDITION'),
+		probability 		= _('%'),
+		country 			= _('COUNTRY'), 
+		name 				= _('NAME'),
+		task 				= _('TASK'),
+		nothing 			= _('Nothing'),
+		unit 				= _('UNIT'), 
+		unit_of 			= _('OF'),     
+		type 				= _('TYPE'), 
+		hidden 				= _('HIDDEN ON MAP'),
+		hiddenOnPlanner 	= _('HIDDEN ON PLANNER'),
+		uncontrolled 		= _('UNCONTROLLED'),
+		hiddenOnMFD 		= _('HIDDEN ON MFD'),
+		lateActivation 		= _('LATE ACTIVATION'),
+		pilot 				= _('PILOT'),
+		skill 				= _('SKILL'),
+		onboard_num 		= _('ONBOARD'),
+		callsign 			= _('CALLSIGN'),
+        HEADING 			= _('HEADING'),
+		Enable 				= _('Enable'),
+		radio 				= _('RADIO'),
+		FREQUENCY 			= _('FREQUENCY'),
+		MHz 				= _('MHz'),
+		invalidFreq 		= _('Invalid frequency'),
 		error				= _('ERROR'),
 		continue_question 	= _('Continue?'),
 		ok					= _('OK'),
 		cancel 				= _('CANCEL'),
+		all		 			= _("ALL"),
+		combat	 			= _("COMBAT"),
+		uncontrollable 		= _('GAME MASTER ONLY'),
+		
 		modulationName		= {
-			[DB.MODULATION_AM] = _('AM'),
-			[DB.MODULATION_FM] = _('FM')
-		}	
+			[DB.MODULATION_AM] 			= _('AM'),
+			[DB.MODULATION_FM]			= _('FM'),
+		--	[DB.MODULATION_AM_AND_FM ] 	= _('AM/FM')
+		},		
 	}
     
-    if base.LOFAC then
+    if ProductType.getType() == "LOFAC" then
         cdata.unit   = _("UNIT-LOFAC")
     end
 
-	aiSkills 		= crutches.getSkillsNames(false)
+	aiSkills 		= crutches.getSkillsNamesAir(false)
 	local defaultAiSkill = aiSkills[3]
-	humanSkills 	= crutches.getSkillsNames(true)
-	clientSkills 	= crutches.getSkillsNames(false, true)   --(false, true) --включение в список Client
-	defaultSkill 	= crutches.getDefaultSkill()
+	humanSkills 	= crutches.getSkillsNamesAir(true)
+	clientSkills 	= crutches.getSkillsNamesAir(false, true)   --(false, true) --включени??список Client
+	defaultSkill 	= crutches.getDefaultSkillAir()
 
 	countries = {}
 
 	vdatas[ __views__[1] ] = {
-		name 		= _('New Helicopter Group'),
+		name 		= _('Rotary_g', 'Rotary').."-1",
 		unit 		= {number = 1, cur = 1,},
-		pilots 		= { cdata.pilotList[1], }, -- имена пока что формируются автоматически
 		skills 		= {}, -- формируется из Units.Skills
 		onboard_num	= '050',
 		callsign 	= '501',
@@ -132,9 +145,8 @@ __view__  = __views__[1]
 		radioSet = false
 		}
 	vdatas[__views__[2] ] = {
-		name 		= _('New Airplane Group'),
+		name 		= _('Aerial_g', 'Aerial').."-1",
 		unit 		= {number = 1, cur = 1,},
-		pilots 		= { cdata.pilotList[1], }, -- имена пока что формируются автоматически
 		skills 		= {}, -- формируется из Units.Skills
 		onboard_num = '010',
 		callsign 	= '100',
@@ -153,38 +165,35 @@ __view__  = __views__[1]
 
 	selectionColor = {255/255, 240/255, 0/255, 1}
 
-	curHumanControlledAircrafts = {} --список типов летательных аппаратов доступных для выбора в текушей панели
+	curHumanControlledAircrafts = {} --список типо?летательны?аппарато?доступны?для выбора ?текуше?панели
 	
-	local default_tasks = {} --задачи по умолчанию для каждого типа ЛА
+	local default_tasks = {} --задачи по умолчани?для каждог?типа ЛА
 	
 -------------------------------------------------------------------------------
--- Создание и размещение виджетов
+-- Создание ?размещение виджетов
 function create(x, y, w, h)
 	window = DialogLoader.spawnDialogFromFile('MissionEditor/modules/dialogs/me_aircraft_group.dlg', cdata)
 	window:setBounds(x, y, w, h)
+	
+	w_ = w
 
 	local panelSkins = window.panelSkins
 	
-	taskItemSkin = window.c_task:getSkin().skinData.skins.listBox.skinData.skins.item
-	defaultTaskItemSkin = panelSkins.listBoxItemDefaultTask:getSkin()
-	humanAircraftItemSkin = panelSkins.listBoxItemHumanAircraft:getSkin()
-	playerItemSkin = panelSkins.listBoxItemPlayerAircraft:getSkin()
-	validFrequencyEditBoxSkin = window.e_frequency:getSkin()
+	taskItemSkin 				= window.c_task:getSkin().skinData.skins.listBox.skinData.skins.item
+	defaultTaskItemSkin 		= panelSkins.listBoxItemDefaultTask:getSkin()
+	humanAircraftItemSkin 		= panelSkins.listBoxItemHumanAircraft:getSkin()
+	playerItemSkin 				= panelSkins.listBoxItemPlayerAircraft:getSkin()
+	validFrequencyEditBoxSkin 	= window.e_frequency:getSkin()
 	invalidFrequencyEditBoxSkin = panelSkins.editBoxInvalidFrequency:getSkin()	
+	eNameWhiteSkin 				= panelSkins.eNameWhite:getSkin()
+	eNameRedSkin 				= panelSkins.eNameRed:getSkin()
 	
-	countries = CoalitionController.getActiveCountries()
-
-    -- Формирование данных по всем странам и задачам.
+    -- Формирование данных по всем страна??задача?
 	createCountryTasksTable()
 
 	setData(vdatas[__view__])
 
-	vdata.country 	= countries[1]
-	vdata.task 		= country_tasks[__view__][vdata.country][1]
-	vdata.type 		= country_task_aircraft_list[__view__][vdata.country][vdata.task][1]
-    
 	createControls()
-	updateAutoTask()
 
 	local cx, cy, cw, ch = window:getClientRect()
   
@@ -197,15 +206,16 @@ function create(x, y, w, h)
 end
 
 -------------------------------------------------------------------------------
--- Создание контролов панели
+-- Создание контроло?панели
 function createControls()
-	-- Заголовок
+	-- Заголово?
 	window:setText(cdata.title[__view__])
     
     btnShowId = DialogLoader.findWidgetByName(window, "btnShowId")
     
 	function window:onClose()
-		onButtonClose()
+		MapWindow.expand()
+		onButtonClose()		
 	end
 
     t_heading = window.t_heading
@@ -217,33 +227,30 @@ function createControls()
     d_heading:setVisible(false)
     
     function sp_heading:onChange()
-      local n = self:getValue()
-      
-      vdata.group.units[vdata.unit.cur].heading = U.toRadians(n)
-      vdata.lastHeading = U.toRadians(n)
-      d_heading:setValue(n)
-      updateHeading()
+		local n = self:getValue()      
+		vdata.group.units[vdata.unit.cur].heading = U.toRadians(n)
+		vdata.lastHeading = U.toRadians(n)
+		d_heading:setValue(n)
+		updateHeading()
     end
 
     function d_heading:onChange()
-      vdata.group.units[vdata.unit.cur].heading = U.toRadians(self:getValue())
-      vdata.lastHeading = U.toRadians(self:getValue())
-      sp_heading:setValue(base.math.floor(self:getValue()))
-      updateHeading()
+		vdata.group.units[vdata.unit.cur].heading = U.toRadians(self:getValue())
+		vdata.lastHeading = U.toRadians(self:getValue())
+		sp_heading:setValue(base.math.floor(self:getValue()))
+		updateHeading()
     end
     
-	-- комбобокс со странами
+	-- комбобок?со странами
 	c_country = window.c_country
-	U.fill_combo(c_country, countries)
-	vdata.country = countries[1]
 	
-	-- поле редактирования Имени
+	-- поле редактирован? Имен?
 	e_name = window.e_name
 
-	--комбобокс Задач
+	--комбобок?Зада?
 	c_task = window.c_task
 		   
-	-- Spin текущего юнита
+	-- Spin текущего юнит?
 	sp_unit = window.sp_unit
 	sp_unit:setRange(1, vdata.unit.number)
 	sp_unit:setValue(vdata.unit.cur)
@@ -255,66 +262,72 @@ function createControls()
 	sp_of:setRange(1, maxUnitCount)
 	sp_of:setValue(vdata.unit.number)	  
 
-	-- комбобокс Типов 
+	-- комбобок?Типо?
 	c_type = window.c_type
-	local types = country_task_aircraft_list[__view__][vdata.country][vdata.task]
-
-	U.fill_combo(c_type, types)
-	vdata.type = types[1]
 	  
-	-- поле редактирования Пилота
+	-- поле редактирован? Пилота
 	e_pilot = window.e_pilot
 
-	-- комбобокс Скилов
+	-- комбобок?Скилов
 	c_skill = window.c_skill
 	U.fill_combo(c_skill, humanSkills)
 	c_skill:setText(defaultAiSkill)
 
-	-- Поле редактирования бортового номера
+	-- Поле редактирован? бортовог?номера
 	e_onboard_num = window.e_onboard_num
 
-	-- надпись Callsign
+	-- надпис?Callsign
 	t_callsign = window.t_callsign
 
-	-- поле редактирования позывного
+	-- поле редактирован? позывног?
 	e_callsign = window.e_callsign
 	c_callsign = window.c_callsign
 	e_callsignGroupNum = window.e_callsignGroupNum
 	e_callsignUnitNum = window.e_callsignUnitNum
 
-	--чекбокс Comm
+	--чекбок?Comm
 	commCheckBox = window.commCheckBox
 
-	--поле редактирования частоты
+	--поле редактирован? частот?
 	e_frequency = window.e_frequency
 	e_frequency:setText(vdata.frequency)
 
-	--modulation label
-	t_modulation = window.t_modulation
+	--modulation 
+	clModulation = window.clModulation
 
-	-- чекбокс "Скрыт на карте"
+	-- чекбок?"Скры?на карт?
 	hiddenCheckbox = window.hiddenCheckbox
+	
+	cbHiddenOnPlanner = window.cbHiddenOnPlanner
+	
+	-- чекбок?"hiddenOnMFD"
+	cbHiddenOnMFD = window.cbHiddenOnMFD
 
-	-- чекбокс "Неуправляем"
+	-- чекбок?"Неуправляем"
 	uncontrolledCheckBox = window.uncontrolledCheckBox
 
-	-- чекбокс "Поздняя активация"
+	-- чекбок?"Позд?я активация"
 	lateActivationCheckBox = window.lateActivationCheckBox
 
-	-- условие появления 
+	-- услови?появлен? 
 	e_group_condition = window.e_group_condition
 
-	-- вероятность появления 
+	-- вероятность появлен? 
 	sp_probability = window.sp_probability
 
 	groupVariant = GroupVariant.new(window)
+	
+	tbFilter = window.tbFilter
+	tbFilter:setText(cdata.combat)
+	
+	cbUncontrollable = window.cbUncontrollable
 
 	bindControls()
 end
 
 
 -------------------------------------------------------------------------------
---назначаем обработчики контролам
+--назначае?обработчик?контрола?
 function bindControls()
 	c_country.onChange 				= onComboCountry
 	e_name.onChange 				= onEditName
@@ -331,13 +344,41 @@ function bindControls()
 	e_frequency.onChange 			= onEditFrequency
 	commCheckBox.onChange 			= onCheckComm
 	hiddenCheckbox.onChange 		= MapWindow.OnHiddenCheckboxChange
+	cbHiddenOnPlanner.onChange 		= onChange_cbHiddenOnPlanner
+	cbHiddenOnMFD.onChange 			= onChange_cbHiddenOnMFD
 	uncontrolledCheckBox.onChange	= onUncontrolled
 	lateActivationCheckBox.onChange = onLateActivation
 	e_group_condition.onChange		= onCondition
 	sp_probability.onChange			= onProbability
     btnShowId.onChange              = onChange_ShowId
+	clModulation.onChange           = onChange_clModulation
+	tbFilter.onChange           	= onChange_tbFilter
+	cbUncontrollable.onChange 		= onChange_cbUncontrollable
 end
 
+function onChange_cbUncontrollable(self)
+	if vdata.group then
+		vdata.group.uncontrollable = self:getState()
+	end
+end
+
+function onChange_tbFilter(self)
+	if (self:getState() == true) then
+		self:setText(cdata.all)
+	else
+		self:setText(cdata.combat)
+	end
+	updateCountries()
+	update()
+end	
+	
+function onChange_clModulation()
+	vdata.group.modulation = clModulation:getSelectedItem().modulation
+	panel_radio.update()
+	
+	local frequency = tonumber(e_frequency:getText())
+    panel_radio.setConnectFrequency(frequency, vdata.group.modulation)
+end	
 
 function onChange_ShowId()
     panel_showId.setGroup(vdata.group)
@@ -345,7 +386,7 @@ function onChange_ShowId()
 end
     
 -------------------------------------------------------------------------------
---частота по умолчанию для разных типов ЛА
+--частот?по умолчани?для разных типо?ЛА
 
 function getDefaultRadioFor(group)
 	local firstUnit = group.units[1]
@@ -366,14 +407,14 @@ local function getDefaultRadio()
 end
 
 -------------------------------------------------------------------------------
---словесные позывные для разных типов ЛА
+--словесны?позывные для разных типо?ЛА
 local function getCallnames(a_id, a_type)
         return DB.db.getCallnames(a_id, a_type) or	
 				DB.db.getUnitCallnames(a_id, DB.unit_by_type[a_type].attribute)
 end
 
 -------------------------------------------------------------------------------
---проверка соответствия позывных
+--проверка соответств? позывных
 function verifyCallnames(callname)
     local callnames
     if (vdata.group ~= nil) then
@@ -388,7 +429,7 @@ function verifyCallnames(callname)
 end
 
 -------------------------------------------------------------------------------
---получение нового бортового номера
+--получени?нового бортовог?номера
 function getNewOnboard_num(a_unit)
 	local maxOnboard_num = 0
 	local curNumFlag = false
@@ -417,15 +458,15 @@ function getNewOnboard_num(a_unit)
 end
 
 -------------------------------------------------------------------------------
--- Изменение позывного
+-- Изменени?позывног?
 function changeCallsign()
     local callsign, onboardNum = '', ''
     local countryName = c_country:getText() --vdata.group.boss
     local westernCountry = U.isWesternCountry(countryName)
     if vdata.group then
         callsign = vdata.group.units[vdata.unit.cur].callsign
-        if westernCountry then -- новая страна западная
-            if not isWesternCallsign(callsign) then -- старый позывной не западный, надо поменять на западный
+        if westernCountry then -- новая страна западн?
+            if not isWesternCallsign(callsign) then -- старый позывной не западный, надо поме?ть на западный
                 for i, unit in ipairs(vdata.group.units) do
                     local callsignName, groupId, unitId
                     callsign, callsignName, groupId, unitId = getNewCallsign(unit)
@@ -479,15 +520,14 @@ function getView()
 end
 
 -------------------------------------------------------------------------------
---установка вида helicopter/plane
+--установк?вида helicopter/plane
 function setView(view)
     if (view ~= 'helicopter') and (view ~= 'plane') then
         print('setView error: "' .. tostring(view or '') ..  '" only "helicopter" or "plane" allowed')
         assert(0)
     else
-        local oldCountry = vdata.country 
-		vdata ={}
-        vdata.country = oldCountry
+		vdata = {}
+        vdata.country = editorManager.getNewGroupCountryName()
 		setData(vdatas[view])
 		_tabs:selectTab('route')
 		vdata.unit.number = 1
@@ -514,7 +554,7 @@ function setView(view)
             if (unitTypeDesc.Navpoint_Panel == true) then
                 _tabs:showTab('navPoint')
             else
-                _tabs:hideTab('navPoint')
+                _tabs:hideTab('navPoint') 
             end
 
             if (unitTypeDesc.Fixpoint_Panel == true) then
@@ -522,22 +562,30 @@ function setView(view)
             else
                 _tabs:hideTab('fixPoint')
             end
+			
+			if (isDataCartridge(unitTypeDesc)) then
+				_tabs:showTab('dataCartridge')
+			else
+				_tabs:hideTab('dataCartridge')               
+			end
         else
             _tabs:hideTab('fixPoint')
 			_tabs:hideTab('navPoint')
+			_tabs:hideTab('dataCartridge')  
         end
 
     end
 end
 
 -------------------------------------------------------------------------------
---смена вида helicopter/plane
+--смен?вида helicopter/plane
 function switchView(view)
     __view__ = view
     window:setText(cdata.title[__view__])
 
 	vdata.type = nil
 
+	createCountryTasksTable()
     fillCountries(true)
 end
 
@@ -591,7 +639,7 @@ local function conditionInspectionFrequency(firstUnit, unitType)
 end
 
 -------------------------------------
---проверка введенной частоты по диапазону допустимых значений для юнита данного типа
+--проверка введенно?частот?по диапазон?допустимых значений для юнит?данног?типа
 local function isFrequencyValid(group)
 	if (group == nil) or (group.units == nil) or (group.units[1] == nil) then
 		return true
@@ -599,7 +647,7 @@ local function isFrequencyValid(group)
 	local firstUnit = group.units[1]
 	local unitType = firstUnit.type
 	local unitTypeDesc = DB.unit_by_type[unitType]
-    -- проверка частот для ботов отключена
+    -- проверка частот для бото?отключен?
  --   if conditionInspectionFrequency(firstUnit, unitType) then
 --		if unitTypeDesc.HumanRadio and unitTypeDesc.HumanRadio.editable then
     if (firstUnit.skill == crutches.getPlayerSkill() or firstUnit.skill == crutches.getClientSkill()) then
@@ -630,6 +678,62 @@ local function isFrequencyValid(group)
 	end
 end
 
+local function fillModulationList(a_type)
+	clModulation:clear()
+	if a_type == DB.MODULATION_AM_AND_FM then
+		local item = ListBoxItem.new(cdata.modulationName[DB.MODULATION_AM])
+		item.modulation = DB.MODULATION_AM
+		clModulation:insertItem(item)
+		
+		local item = ListBoxItem.new(cdata.modulationName[DB.MODULATION_FM])
+		item.modulation = DB.MODULATION_FM
+		clModulation:insertItem(item)
+		clModulation:setEnabled(true)
+	else
+		local item = ListBoxItem.new(cdata.modulationName[a_type])
+		item.modulation = a_type
+		clModulation:insertItem(item)
+		clModulation:setEnabled(false)
+	end
+	clModulation:selectItem(clModulation:getItem(0))
+	if vdata.group then
+		vdata.group.modulation = clModulation:getItem(0).modulation
+	end
+end
+
+local function setModulationInComboList(a_modulation)
+	if a_modulation ~= nil then
+		for i=0, clModulation:getItemCount()-1 do
+			local item = clModulation:getItem(i)
+			if item and item.modulation == a_modulation then
+				clModulation:selectItem(item)
+				return true
+			end
+		end
+	end
+	return false
+end
+
+local function updateModulation(a_frequency)
+	if vdata.group then
+		local unitDef = DB.unit_by_type[vdata.type]
+		if unitDef.HumanRadio and unitDef.HumanRadio.rangeFrequency then
+			for k,v in base.pairs(unitDef.HumanRadio.rangeFrequency) do
+				if v.modulation then
+					if a_frequency >= v.min and a_frequency <= v.max then
+						fillModulationList(v.modulation)	
+					end
+				else
+					fillModulationList(DB.MODULATION_AM)	
+				end
+			end
+		else
+			fillModulationList(vdata.group.modulation)
+		end
+		setModulationInComboList(vdata.group.modulation)	
+	end
+end
+
 -------------------------------------------------------------------------------
 -- setting the default frequency for group
 function setDefaultRadio(a_allDefault)
@@ -644,7 +748,8 @@ function setDefaultRadio(a_allDefault)
 			vdata.group.modulation = defaultModulation
 		end	
 		e_frequency:setText(vdata.frequency)
-		t_modulation:setText(cdata.modulationName[vdata.modulation])
+		--t_modulation:setText(cdata.modulationName[vdata.modulation])
+		updateModulation(vdata.frequency)
 	end
     
     if vdata.group then
@@ -653,6 +758,8 @@ function setDefaultRadio(a_allDefault)
         else
             e_frequency:setSkin(invalidFrequencyEditBoxSkin)    
         end
+	else
+		e_frequency:setSkin(validFrequencyEditBoxSkin)
     end    
 	updateEnableFrequencyEditBox()
 end
@@ -678,6 +785,11 @@ function changeType(type)
                 unit.skill = vdata.skills[vdata.unit.cur]
             end                      
             
+			-- Разгружаем пилоны
+			unit.payload.pylons = {}
+			unit.payload.fuel = maxFuel
+			unit.payload.ammo_type = nil
+			
             if oldType ~= type then
                 local unitTypeDesc = DB.unit_by_type[type]
                 if (unitTypeDesc.AddPropAircraft ~= nil) then
@@ -686,23 +798,28 @@ function changeType(type)
                     panel_paramFM.setData(unitTypeDesc.AddPropAircraft, unit)
                 else
                     unit.AddPropAircraft = nil 
-                end                
+                end 
+
+				if (unitTypeDesc.dataCartridge ~= nil) then 
+					unit.dataCartridge = {}  
+                    panel_dataCartridge.setData(unit)
+                else
+                    unit.dataCartridge = nil 
+                end			
             end
             
-			-- Разгружаем пилоны
-			unit.payload.pylons = {}
-			unit.payload.fuel = maxFuel
-		
-			--по просьбе авиаторов не доливаем P-51
+			--по просьб?авиаторо?не доливаем P-51
 			if (unitDef.defFuelRatio) then
                 unit.payload.fuel = unitDef.defFuelRatio * maxFuel
 			end
 			panel_payload.setDefaultLivery(unit)
+			
+			panel_radio.createRadioForUnit(unit)
 		end
 
 		for k,v in pairs(vdata.group.units) do
 			if (v.skill == crutches.getPlayerSkill()) then
-				panel_failures.change_player_plane(true, type)
+				panel_failures.change_player_plane(false, type)
 				if (panel_failures.isVisible() == true) then
 					panel_failures.show(true)
 				end
@@ -715,8 +832,14 @@ function changeType(type)
 	
 		local wpt = panel_route.vdata.wpt
 		if wpt.linkUnit then
-			module_mission.relinkChildren(wpt.linkUnit)
+			module_mission.relinkChildren(wpt.linkUnit, vdata.group)
 		end
+		
+		-- перестав?ем ла пр?смен?типа
+		local wpt1 = vdata.group.route.points[1]
+		if panel_route.isAirfieldWaypoint(wpt1.type) then
+			panel_route.attractToAirfield(wpt1, vdata.group)
+		end  
 
         panel_route.updateAltSpeed()
 		panel_route.update()
@@ -738,141 +861,138 @@ function changeType(type)
 	verifySingleInFlight(type)
 	
 	panel_route.onUnitTypeChange()
-    fillSkillsList()
     updateSkill()
 	setDefaultRadio(true)
 	updateCallsignControls()
 end
 
--------------------------------------------------------------------------------
---поиск итема в таблице по имени
-local function findTableItemByName(table, item)
-	for _tmp, v in pairs(table) do
-		if v == item.Name then
-		  return true
-		end
-	end
-
-	return false
-end
 
 -------------------------------------------------------------------------------
---возвращает имя задачи по ID
-local function getTaskName(taskWorldID)
-	if not taskWorldIDs__ then
-		-- создадим таблицу для быстрого поиска
-		taskWorldIDs__ = {}
-		for _tmp, task in pairs(DB.db.Units.Planes.Tasks) do
-		  taskWorldIDs__[task.WorldID] = task.Name
-		end
-	end
-
-	if not taskWorldIDs__[taskWorldID] then
-		print('Task with WorldID ' .. taskWorldID .. ' is not presented in DB.db.Units.Planes.Tasks table!')
-		return
-	end
-
-	return taskWorldIDs__[taskWorldID]  
-end
-
--------------------------------------------------------------------------------
---возвращает ID задачи по имени
-local function getTaskWorldID(taskName)
-  if not taskNames__ then
-    -- создадим таблицу для быстрого поиска
-    taskNames__ = {}
-    for _tmp, task in pairs(DB.db.Units.Planes.Tasks) do
-      taskNames__[task.Name] = task.WorldID
-    end
-  end
-  
-  if not taskNames__[taskName] then
-    print('Task ' .. taskName .. ' is not presented in DB.db.Units.Planes.Tasks table!')
-  end
-  
-  return taskNames__[taskName]
-end
-
--------------------------------------------------------------------------------
--- возвращает имя дефолтной задачи
-function getDefaultTaskName()
-  local defaultWorldID = DB.db.Units.Planes.DefaultTask.WorldID
- 
-  return getTaskName(defaultWorldID)
-end
-
--------------------------------------------------------------------------------
---Формирование данных по всем странам и задачам.
+--Формирование данных по всем страна??задача?
 function createCountryTasksTable()
-  -- Формирование данных по всем странам и задачам.
-  -- список задач для страны с разбивкой по самолетам 
+  -- Формирование данных по всем страна??задача?
+  -- список зада?для страны ?разбивко?по самолета?
   -- country_task_aircraft_list[__view__][CountyName] = {taskName = {planeName, planeName, ...},
   --                                        taskName = {planeName, planeName, ...}}  
     country_task_aircraft_list = {} 
   
-  -- список задач для страны country_tasks[CountyName] = {taskName, taskName, ...}
-    country_tasks = {} 
+  -- список зада?для страны country_tasks[CountyName] = {taskName, taskName, ...}
+    country_tasks = {} 	
+	countries = {}
+	local countriesTmp = {}	
   
-  -- по всем странам
-	local defaultTaskName = getDefaultTaskName()
-	assert(defaultTaskName)
-	for i, view in ipairs(__views__) do
-		for _tmp, country in pairs(DB.db.Countries) do
-			local countryTasks = {}
-			local taskAircraftsList = {[defaultTaskName] = {}} -- в списке задач должна присутствовать дефолтная задача
+  -- по всем страна?
+	local defaultTaskName = DB.getDefaultTaskName()
+	local Year = (module_mission.mission and module_mission.mission.date.Year) or 2018
+	
+	if (MeSettings.getShowEras() == true) then
+		window:setText(cdata.title[__view__].." - "..Year)
+	else
+		window:setText(cdata.title[__view__])
+	end
 
-			-- по всем самолетам страны 
-            local aircrafts
-            if view == 'helicopter' then 
-                aircrafts = country.Units.Helicopters.Helicopter
-            else
-                aircrafts = country.Units.Planes.Plane
-            end
+	for _tmp, country in pairs(DB.db.Countries) do
+		if base.test_addNeutralCoalition == true or CoalitionData.isActiveContryById(country.WorldID) then				
+			local countryTasks = {}
+			local taskAircraftsList = {}
+			
+			-- по всем самолета?страны 
+			local aircrafts
+			if __view__ == 'helicopter' then 
+				aircrafts = country.Units.Helicopters.Helicopter
+			else
+				aircrafts = country.Units.Planes.Plane
+			end
 		
 			for _tmp, plane in pairs(aircrafts) do
 			  local unit = DB.unit_by_type[plane.Name]
 			  
-			  -- по всем задачам самолета
+			  -- по всем задача?самолета
 			  if not unit then
-				print("check unit ",plane.CLSID,plane.Name)
+				--print("check unit ",plane.CLSID,plane.Name)
 			  else
-				  if not unit.DefaultTask  then
-				    base.error(unit.type..' has no default task!')
-				  end
+					if not unit.DefaultTask  then
+						base.error(unit.type..' has no default task!')
+					end
 				 
-				  default_tasks[unit.type] = unit.DefaultTask.Name
-				  for _tmp, task in pairs(unit.Tasks) do 
-					-- проверяем, существует ли уже такая задача в countryTasks
-					if not findTableItemByName(countryTasks, task) then
-					  table.insert(countryTasks, task.Name)
+					default_tasks[unit.type] = unit.DefaultTask.Name
+					
+					local tmp_in, tmp_out = DB.db.getYearsLocal(unit.type, country.OldID)
+					for _tmp, task in pairs(unit.Tasks) do 
+						if ((MeSettings.getShowEras() ~= true))
+							or ((vdata.group and vdata.group.units[1].type == unit.type) 
+								or (MeSettings.getShowEras() == true and tmp_in<= Year and Year <= tmp_out)) then
+							-- проверяем, существует ли уж?такая задача ?countryTasks
+							if not U.findTableItemByName(countryTasks, task) then
+							  table.insert(countryTasks, task.Name)
+							end
+										
+							-- добавляем самоле??список задачи
+							taskAircraftsList[task.Name] = taskAircraftsList[task.Name] or {}
+							table.insert(taskAircraftsList[task.Name], {type = unit.type,in_service = tmp_in or 0, out_of_service = tmp_out or 40000})							
+						end		
 					end
-                    
-					-- добавляем самолет в список задачи
-					taskAircraftsList[task.Name] = taskAircraftsList[task.Name] or {}
-					table.insert(taskAircraftsList[task.Name], unit.type)							
-				  end
-				  -- добавляем самолет в список дефолтной задачи
-					if not findTableItemByName(taskAircraftsList[defaultTaskName], unit) then
-					  table.insert(taskAircraftsList[defaultTaskName], unit.type)
-					end
+					
+					if ((MeSettings.getShowEras() ~= true))
+							or ((vdata.group and vdata.group.units[1].type == unit.type) 
+								or (MeSettings.getShowEras() == true and tmp_in<= Year and Year <= tmp_out)) then
+						-- добавляем самоле??список дефолтно?задачи	
+						taskAircraftsList[defaultTaskName] = taskAircraftsList[defaultTaskName] or {}	
+						if not U.findTableItemByName(taskAircraftsList[defaultTaskName], unit) then
+						  table.insert(taskAircraftsList[defaultTaskName], {type = unit.type,in_service = tmp_in or 0, out_of_service = tmp_out or 40000})
+						end
+					end	
 			  end
 			end
-
-			-- сортируем самолеты по именам
-			for _tmp, u in pairs(taskAircraftsList) do
-			  table.sort(u)
+			
+			local function compTable(tab1, tab2)
+				return tab1.type < tab2.type 
 			end
-			-- сортируем задачи по именам
-			table.sort(countryTasks)
-			-- добавляем дефолтную задачу на первое место
-			table.insert(countryTasks, 1, defaultTaskName)
-					
-			country_tasks[view] = country_tasks[view] or {}
-			country_task_aircraft_list[view] = country_task_aircraft_list[view] or {}
-			country_tasks[view][country.Name] = countryTasks
-			country_task_aircraft_list[view][country.Name] = taskAircraftsList
+			-- сортируе?самолеты по именам
+			for _tmp, u in pairs(taskAircraftsList) do
+				base.table.sort(u,compTable)
+			end
+			
+			if taskAircraftsList[defaultTaskName] ~= nil then
+				countriesTmp[country.OldID] = country.Name					
+				-- сортируе?задачи по именам
+				table.sort(countryTasks)
+				-- добавляем дефолтну?задачу на первое мест?
+				table.insert(countryTasks, 1, defaultTaskName)
+						
+				country_tasks[__view__] = country_tasks[__view__] or {}
+				country_task_aircraft_list[__view__] = country_task_aircraft_list[__view__] or {}
+				country_tasks[__view__][country.Name] = countryTasks
+				country_task_aircraft_list[__view__][country.Name] = taskAircraftsList
+			end
+		end	
+	end
+	
+	if countriesTmp then
+		local usa, rus
+		for k,v in base.pairs(countriesTmp) do
+			if k == "Russia" then
+				rus = v
+			elseif k == "USA" then
+				usa = v
+			else
+				base.table.insert(countries, v)
+			end
+		end
+		base.table.sort(countries)
+		
+		if rus then
+			base.table.insert(countries, 1, rus)
+		end	
+		if usa then		
+			if ProductType.getType() ~= "LOFAC" then
+				base.table.insert(countries, 1, usa)
+			else
+				base.table.insert(countries, 2, usa)
+			end
 		end
 	end
+
 end
 
 -------------------------------------------------------------------------------
@@ -890,6 +1010,7 @@ function close()
 	panel_triggered_actions.show(false)
 	panel_fix_points.show(false)
     panel_nav_target_points.show(false)
+	panel_dataCartridge.show(false)
 	MapWindow.setState(MapWindow.getPanState())
 	show(false)
 	toolbar.setAirplaneButtonState(false)
@@ -912,9 +1033,10 @@ function setPlannerMission(planner_mission)
 		c_callsign:setEnabled(false)
 		e_callsignGroupNum:setEnabled(false)
 		e_callsignUnitNum:setEnabled(false)  
-		hiddenCheckbox:setVisible(false)
-		uncontrolledCheckBox:setVisible(false)
+		hiddenCheckbox:setVisible(false)		
 		lateActivationCheckBox:setVisible(false)
+		cbHiddenOnPlanner:setVisible(false)
+		cbHiddenOnMFD:setVisible(false)
 		e_group_condition:setVisible(false)
 		sp_probability:setVisible(false)
 	else
@@ -929,11 +1051,52 @@ function setPlannerMission(planner_mission)
 		c_callsign:setEnabled(true)
 		e_callsignGroupNum:setEnabled(true)
 		e_callsignUnitNum:setEnabled(true)  
-		hiddenCheckbox:setVisible(true)
-		uncontrolledCheckBox:setVisible(vdata.group ~= nil and  vdata.group.route.points[1].type == panel_route.actions.takeoffParking)
+		hiddenCheckbox:setVisible(true)		
+		cbHiddenOnMFD:setVisible(true)		
 		lateActivationCheckBox:setVisible(true)
+		cbHiddenOnPlanner:setVisible(true)
 		e_group_condition:setVisible(true)
 		sp_probability:setVisible(true)
+	end
+	updateVisibleUncontrolled()
+	updateVisibleUncontrollable()
+end
+
+function updateVisibleUncontrollable()
+	if base.isPlannerMission() == true or vdata.group == nil then
+		cbUncontrollable:setVisible(false) 
+	else
+		local bNotPlayer = true
+		for k,v in base.pairs(vdata.group.units) do
+			if v.skill == crutches.getPlayerSkill() or v.skill == crutches.getClientSkill() then
+				bNotPlayer = false
+			end
+		end
+
+		cbUncontrollable:setVisible(bNotPlayer) 
+		if vdata.group and bNotPlayer == false then
+			vdata.group.uncontrollable = false
+		end
+	end
+end
+
+function updateVisibleUncontrolled()
+	if base.isPlannerMission() == true or vdata.group == nil then
+		uncontrolledCheckBox:setVisible(false) 
+	else
+		local bBotUnits = false
+		for k,v in base.pairs(vdata.group.units) do
+			if v.skill ~= crutches.getPlayerSkill() and v.skill ~= crutches.getClientSkill() then
+				bBotUnits = true
+			end
+		end
+		local bVisible = (bBotUnits == true 
+			and (vdata.group.route.points[1].type.type == panel_route.actions.takeoffParking.type)
+				or vdata.group.route.points[1].type.type == panel_route.actions.takeoffGround.type)
+		uncontrolledCheckBox:setVisible(bVisible)
+		if vdata.group and bVisible == false then
+			vdata.group.uncontrolled = false
+		end
 	end
 end
 
@@ -947,51 +1110,71 @@ end
 -- Открытие/закрытие панели
 function show(b)
 	setPlannerMission(base.isPlannerMission())
-    
+
     if b == window:isVisible() then
         return
     end
-
+		
 	vdata.unit.cur = 1
-  
-  if b then
-	--setPlannerMission(base.isPlannerMission())
-	if vdata.group == nil then
-		setDefaultAircraft()
-	end
 
-	groupVariant:initialize(vdata.group and vdata.group.variantProbability, 1)
-    update()
-    
-    if not(vdata.group) then
-        setDefaultRadio()
-        commCheckBox:setState(vdata.communication)
-		e_frequency:setEnabled(commCheckBox:getState())
-    end
-  else
-    vdata.group = nil	-- Во избежание нежелательной связи с группой при следующем открытии.
-    panel_paramFM.show(false)
-	panel_radio.show(false)
-    panel_route.show(false)
-    panel_wpt_properties.show(false)
-    panel_loadout.show(false)
-    panel_payload.show(false)
-    panel_targeting.show(false)
-    panel_summary.show(false)
-	panel_triggered_actions.show(false)
-  end
-  window:setVisible(b)
+	if b then	
+		MapWindow.collapse(w_, 0)
+		--setPlannerMission(base.isPlannerMission())
+		updateCountries()	
+
+		if vdata.group == nil then
+			setDefaultAircraft()
+		else		
+			local selectedUnit_ = MapWindow.getSelectedUnit()
+			if selectedUnit_ then
+				for k,unit in base.pairs(vdata.group.units) do
+					if unit.unitId == selectedUnit_.unitId then
+						vdata.unit.cur = k
+					end
+				end
+			end
+		end
+	
+		groupVariant:initialize(vdata.group and vdata.group.variantProbability, 1)
+		update()
+		
+		if not(vdata.group) then
+			setDefaultRadio()
+			commCheckBox:setState(vdata.communication)
+			e_frequency:setEnabled(commCheckBox:getState())
+		end
+	else
+		MapWindow.expand()
+		local oldGroup = vdata.group	
+		vdata.group = nil	-- Во избежани?нежелательно?связи ?группо?пр?следующе?открытии.		
+		if oldGroup then
+			module_mission.remove_dataCartridge_map_objects(oldGroup) -- для очистк??карт?точе?dataCartridge
+		end	
+		panel_dataCartridge.setData(nil)
+		panel_dataCartridge.show(false)
+		panel_paramFM.show(false)
+		panel_radio.show(false)
+		panel_route.show(false)
+		panel_wpt_properties.show(false)
+		panel_loadout.show(false)
+		panel_payload.show(false)
+		panel_targeting.show(false)
+		panel_summary.show(false)
+		panel_triggered_actions.show(false)
+	end
+	window:setVisible(b)
+	window:setFocused(false)
 end
 
 -------------------------------------------------------------------------------
--- Загрузка данных из файла
+-- Загрузка данных из файл?
 function load(fName)
     base.dofile(fName)
     vdata = base.vdata
 end
 
 -------------------------------------------------------------------------------
--- Сохранение данных в файле
+-- Сохранение данных ?файл?
 function save(fName)
     local f = base.io.open(fName, 'w')
     if f then
@@ -1017,7 +1200,7 @@ function getUnitNumber()
 end
 
 -------------------------------------------------------------------------------
--- возвращает таблицу [номер пилона] = {CLSID = launcherCLSID}
+-- возвращает таблиц?[номе?пилона] = {CLSID = launcherCLSID}
 function getUnitPylons()
   local pylons = {}
   
@@ -1032,8 +1215,8 @@ function getUnitPylons()
 end
 
 -------------------------------------------------------------------------------
--- устанавливает подвеску на вертолете
--- таблица [pylonNumber] = launcherCLSID
+-- устанавливае?подвеску на вертолет?
+-- таблиц?[pylonNumber] = launcherCLSID
 function setUnitPayload(pylons, payloadName)
   if vdata.group then
     local unit = vdata.group.units[getUnitNumber()]
@@ -1048,62 +1231,45 @@ function setUnitPayload(pylons, payloadName)
   end
 end
 
--------------------------------------------------------------------------------
--- для установки извне
-function setCountry(c)
-    vdata.country = c
-    updateCountry()
+function fill_combo_types()
+	c_type:clear()  
 
-    fillTasksCombo(country_tasks[__view__][vdata.country])
-    setTask()
-
-    fillAircraftsCombo()
-
-	setDefaultAircraft()
-    
-    panel_payload.update()
-	updateTask()
-	updateType()
-    fillSkillsList()
-	fillComboCallsigns()
-	updateCallsignControls()
-    
-    verifyTabs()
+    for i, v in ipairs(country_task_aircraft_list[__view__][vdata.country][vdata.task]) do
+        local item = ListBoxItem.new(v.type)
+      
+        item.index = i
+        c_type:insertItem(item)
+    end
 end
 
 -------------------------------------------------------------------------------
---смена страны
+--смен?страны
 function changeCountry(c)
-    panel_ship.setCountry(c)
-    panel_static.setCountry(c)
-    panel_vehicle.setCountry(c)
-    
-    vdata.country = c
+    vdata.country = c	
     fillTasksCombo(country_tasks[__view__][vdata.country])
     setTask()
 
-    U.fill_combo(c_type, country_task_aircraft_list[__view__][vdata.country][vdata.task])
-	setType()
-
+	local isGroupCountryChange = false
     if vdata.group then
-		if vdata.group.boss.name ~= vdata.country then
-			-- В связи со сменой страны нужно также поменять типы юнитов и цвет группы.
-			-- В связи со сменой страны нужно также оставить в группе только умалчиваемые юниты страны.
-			-- Исключаем группу из старой страны.
+		isGroupCountryChange = vdata.group.boss.name ~= vdata.country
+		if isGroupCountryChange then
+			-- ?связи со сменой страны нужн?такж?поме?ть типы юнитов ?цвет группы.
+			-- ?связи со сменой страны нужн?такж?оставить ?группе только умалчиваемые юнит?страны.
+			-- Исключае?группу из старой страны.
 			for i,v in pairs(vdata.group.boss[__view__].group) do
 				if v == vdata.group then
 					table.remove(vdata.group.boss[__view__].group, i)
 					break
 				end
 			end
-			-- Включаем группу в новую страну.		
+			-- Включаем группу ?нову?страну.		
 			for i,v in pairs(module_mission.mission.coalition) do
 				local boss = vdata.group.boss
 				for j,u in pairs(v.country) do
 					if u.name == vdata.country then
 						vdata.group.boss = u
 						table.insert(u[__view__].group, vdata.group)
-						-- Изменяем цвета объектов карты в группе
+						-- Изме?ем цвет?объектов карт??группе
 						vdata.group.color = u.boss.color
 						break
 					end
@@ -1117,23 +1283,17 @@ function changeCountry(c)
 				local unit = vdata.group.units[i]
 				panel_payload.setDefaultLivery(unit)
 			end
-		end
-
-        -- Пересоздаем объекты карты, поскольку изменились цвета и условные знаки.
-        panel_loadout.update()
-        panel_targeting.update()
-        panel_payload.update()
-		panel_units_list.updateRow(vdata.group)
-
-        -- если у группы первой точкой стоит взлет с полосы или стоянки, 
-        -- то надо проверить на аэродроме чьей коалиции она находится
-        local wpt = vdata.group.route.points[1]
-        if panel_route.isAirfieldWaypoint(wpt.type) then
-            panel_route.attractToAirfield(wpt, vdata.group)
-        end
-        
+			
+			-- если ?группы первой точкой стои?взле??полосы ил?ст?нк? 
+			-- то надо проверит?на аэродром?чьей коалиции он?находится
+			local wpt = vdata.group.route.points[1]
+			if panel_route.isAirfieldWaypoint(wpt.type) then
+				panel_route.attractToAirfield(wpt, vdata.group)
+			end  
+		end 
     end
 	fillAircraftsCombo()
+	setType()
     if vdata.group == nil then
 		setDefaultAircraft()
 	end
@@ -1147,7 +1307,9 @@ function changeCountry(c)
     
     module_mission.updateTitleWaypoints(vdata.group)
 
-	panel_route.onGroupCountryChange()
+	if isGroupCountryChange then
+		panel_route.onGroupCountryChange()
+	end
     verifyTabs()
 end
 
@@ -1162,7 +1324,7 @@ function setSafeMode(enable)
 end
 
 -------------------------------------------------------------------------------
---установка задачи
+--установк?задачи
 function setTask()
 	for k,v in pairs(country_tasks[__view__][vdata.country]) do
 		if (v == vdata.task) then
@@ -1180,15 +1342,33 @@ function setTask()
 end
 
 -------------------------------------------------------------------------------
---установка типа ЛА
+--установк?типа ЛА
 function setType()
 	for k,v in pairs(country_task_aircraft_list[__view__][vdata.country][vdata.task]) do
-		if (v == vdata.type) then
+		if last_data[__view__].type then
+			if (v.type == last_data[__view__].type) then
+				vdata.type = last_data[__view__].type
+				return
+			end	
+		end
+		if (v.type == vdata.type) then
 			return
 		end
 	end
 
-	changeType(country_task_aircraft_list[__view__][vdata.country][vdata.task][1])
+	changeType(country_task_aircraft_list[__view__][vdata.country][vdata.task][1].type)
+	-- Разгружаем пилоны
+	if vdata.group then
+		for i,unit in pairs(vdata.group.units) do
+			unit.payload.pylons = {}
+		end
+		panel_route.setWaypoint(vdata.group.route.points[1])
+		panel_loadout.update()
+        panel_targeting.update()
+        panel_payload.update()
+		panel_units_list.updateRow(vdata.group)
+	end
+
 	return
 end
 
@@ -1250,7 +1430,7 @@ function getNewCallsign(unit)
         end
         if unitId == nil then 
             --print('error, can not determine unit number')
-            unitId = #group.units + 1 -- юнит в процессе создания, он еще не включен в группу
+            unitId = #group.units + 1 -- юнит ?процессе создан?, он ещ?не включе??группу
         end
         if unitId == 1 then
             while true do
@@ -1288,25 +1468,25 @@ function getNewCallsign(unit)
         
         if #callsigns > 1 then
             for i, callsign in ipairs(callsigns) do
-                if callsign >= callsignBase then -- фильтруем неправильные позывные
-                    if math.abs( (callsigns[i+1] or callsign) - callsign) > 1 then -- нашли дырку в номерах позывных
+                if callsign >= callsignBase then -- фильтруе?неправильные позывные
+                    if math.abs( (callsigns[i+1] or callsign) - callsign) > 1 then -- нашл?дырк??номера?позывных
                         return callsign + 1
                     end
                 end
             end
             return callsigns[#callsigns] +1
         else
-            if #callsigns == 0 then -- позывных нет
-                return callsignBase -- возвращаем первый возможный позывной
-            else -- ровно один позывной
-                return callsigns[1] + 1 -- возвращаем следующий номер
+            if #callsigns == 0 then -- позывных не?
+                return callsignBase -- возвращаем первый возможны?позывной
+            else -- ровн?один позывной
+                return callsigns[1] + 1 -- возвращаем следующи?номе?
             end
         end
     end
 end
 
 -------------------------------------------------------------------------------
---при смене типа ЛА устанавливает задачу по умолчанию для нового типа ЛА, если она не менялась вручную
+--пр?смен?типа ЛА устанавливае?задачу по умолчани?для нового типа ЛА, если он?не ме?лась вручну?
 function updateAutoTask()
 	if 	(vdata.group and not vdata.group.taskSelected)
 		or (vdata.group == nil) then	
@@ -1323,7 +1503,7 @@ function updateAutoTask()
 end
 
 -------------------------------------------------------------------------------
---возвращает позывной соответствующий переданной стране
+--возвращает позывной соответствующи?переданной стране
 function getUsedCountryCallsigns(country)
     local callsigns = {}
     local westernCountry = U.isWesternCountry(country.name)
@@ -1372,14 +1552,23 @@ function isAddPropAircraft(unitTypeDesc)
     return false
 end
 
+function isDataCartridge(unitTypeDesc)
+    if (unitTypeDesc.dataCartridge ~= nil) then
+
+                    return true
+
+    end    
+    return false
+end
+
 -------------------------------------------------------------------------------
---для самолета игрока отображаем кнопку вызывающую панель отказов
+--для самолета игрока отображаем кнопку вызывающую панель отказо?
 function verifyTabs()
     local selectedItem = c_type:getSelectedItem()
     if selectedItem == nil then
         return
     end
-	local type = selectedItem.type --c_type:getText()
+	local type = selectedItem.type 
 	_tabs:hideTab('Radio')     
     
     if (vdata.group ~= nil) then
@@ -1394,6 +1583,19 @@ function verifyTabs()
                 _tabs:selectTab('route')
             end
             _tabs:hideTab('paramFM')               
+        end
+
+		if (vdata.skills[vdata.unit.cur] == crutches.getPlayerSkill()
+					or vdata.skills[vdata.unit.cur] == crutches.getClientSkill()) 
+			and (isDataCartridge(unitTypeDesc)) then
+			
+            _tabs:showTab('dataCartridge')         
+            panel_dataCartridge.setData(vdata.group.units[vdata.unit.cur])
+        else
+            if _tabs:getSelectedTab() == 'dataCartridge' then
+                _tabs:selectTab('route')
+            end
+            _tabs:hideTab('dataCartridge')               
         end
     else
         _tabs:hideTab('paramFM')
@@ -1438,7 +1640,7 @@ function verifyTabs()
                 _tabs:showTab('Radio')
                 panel_radio.update()
 				
-                -- синхронизируем частоту
+                -- синхронизируем частот?
                 local frequency = tonumber(e_frequency:getText())
                 
                 if not frequency then
@@ -1447,7 +1649,7 @@ function verifyTabs()
                 end	
                 
                 panel_radio.update()
-                panel_radio.setConnectFrequency(frequency)
+				panel_radio.setConnectFrequency(frequency, vdata.group.modulation)
             else                    
                 if _tabs:getSelectedTab() == 'Radio' then
                     _tabs:selectTab('route')
@@ -1470,12 +1672,43 @@ function verifyTabs()
         _tabs:hideTab('navPoint')
         _tabs:hideTab('fixPoint')
 	end
+	
+	if (vdata.group ~= nil) then
+		local needINUFixPoint = false
+		local needNavTargetPoint = false
+		for k,unit in base.pairs(vdata.group.units) do			
+			if (unit.skill == crutches.getPlayerSkill()
+				or unit.skill == crutches.getClientSkill()) then
+				local unitTypeDesc = DB.unit_by_type[unit.type]
+				if (unitTypeDesc.Fixpoint_Panel == true) then
+					needINUFixPoint = true
+				end
+				if (unitTypeDesc.Navpoint_Panel == true) then
+					needNavTargetPoint = true
+				end
+			end	
+		end
+		
+		if needINUFixPoint ~= true then
+			module_mission.remove_INUFixPoint_All(vdata.group)
+			if  _tabs:getSelectedTab() == 'fixPoint' then
+				_tabs:selectTab('route')
+			end
+		end	
+		
+		if needNavTargetPoint ~= true then
+			module_mission.remove_NavTargetPoint_All(vdata.group)
+			if  _tabs:getSelectedTab() == 'navPoint' then
+				_tabs:selectTab('route')
+			end
+		end				
+	end		
 end
 
 
 
 -------------------------------------------------------------------------------
---Установка самолета по умолчанию
+--Установк?самолета по умолчани?
 function setDefaultAircraft()
 	if (module_mission.isEnableAircraft()) then
 		return
@@ -1493,13 +1726,13 @@ function setDefaultAircraft()
 end
 
 -------------------------------------------------------------------------------
---установка значений панели
+--установк?значений панели
 function setData(a_data)
 	U.copyTable(vdata, a_data)
 end
 
 -------------------------------------------------------------------------------
---			Заполнение контролов									         ---------------------------
+--			Заполнение контроло?								         ---------------------------
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
@@ -1520,17 +1753,40 @@ function fillComboCallsigns()
 	end
 end
 
+function changeEras()
+	if updateCountries() == false then
+		return false
+	end	
+	
+	update()
+	return true
+end 
+
 function updateCountries()
-    fillCountries()
-	if (vdata.country) then
-		changeCountry(vdata.country)
+	if vdata.group == nil then
+		vdata.country, vdata.coalition = editorManager.getNewGroupCountryName()
 	end
+	createCountryTasksTable()
+
+	if #countries == 0 then
+		panel_route.show(false)
+		MsgWindow.warning(_("There are no units available for this criteria.\n              You are using historical mode."),  _('WARNING'), 'OK'):show()
+		return false
+	end
+	
+    fillCountries()
+
+	updateCountry()
+	updateSkill()
+
+	return true
 end
 
 -------------------------------------------------------------------------------
---заполнение списка стран
+--заполнение списка стра?
 function fillCountries(notChange)
 	function getIndexCountry(countries, country)
+		
 		local index = 0
 		for k, v in ipairs(countries) do
 			if (v == country) then
@@ -1540,51 +1796,84 @@ function fillCountries(notChange)
 		return index
 	end
 
-	countries = {}
-	
-	local c = CoalitionController.getActiveCountries()
 
-	for i=1,#c do
-		if country_task_aircraft_list[__view__][c[i] ] then
-			if #country_task_aircraft_list[__view__][c[i] ][getDefaultTaskName()] > 0 then
-				table.insert(countries, c[i])			
+	local function fill_combo_countries(combo, t)    
+        combo:clear()  
+		if not t then
+			combo:setText("")
+			return
+		end 
+		for i, v in ipairs(t) do
+		    local item = ListBoxItem.new(v)
+			
+			local coalition = CoalitionData.getCoalitionByContryId(DB.country_by_name[v].WorldID)
+			if  coalition == "red" then
+				item:setSkin(Skin.listBoxItemCoalRedSkin())
+				item.index = i
+				combo:insertItem(item)
+			elseif coalition == "blue" then
+				item:setSkin(Skin.listBoxItemCoalBlueSkin())
+				item.index = i
+				combo:insertItem(item)
+			elseif tbFilter:getState() == true 
+				or (vdata.group and vdata.group.boss.name == v) then
+				item:setSkin(Skin.listBoxItemCoalNeutralSkin())
+				item.index = i
+				combo:insertItem(item)
+			end
+		end
+    end
+	
+	local function getCountryForCoalition(a_coalition)
+		for k,v in base.pairs(countries) do
+			if a_coalition == CoalitionData.getCoalitionByContryId(DB.country_by_name[v].WorldID) then
+				return countries[k]
 			end
 		end
 	end
-
+	
+	local needChangeCountry = false
 	if #countries > 0 then
-		U.fill_combo(c_country, countries)
+		fill_combo_countries(c_country, countries)
 		if (vdata.country) then
 			if (getIndexCountry(countries, vdata.country) > 0) then					
 			else
-				vdata.country = countries[1] 
+				if vdata.coalition then
+					vdata.country = getCountryForCoalition(vdata.coalition)	or countries[1] 
+				else
+					vdata.country = countries[1] 
+				end
+				needChangeCountry = true
 			end
 		else
 			vdata.country = countries[1] 
+			needChangeCountry = true
 		end
 	else
-		vdata.country = nil
-	end    
+		vdata.country = nil		
+	end   
     
-	if (vdata.country) and (not notChange) then
+	if needChangeCountry and (not notChange) then
 		changeCountry(vdata.country)
 	end
 end
 
 -------------------------------------------------------------------------------
---заполнение списка задач
+--заполнение списка зада?
 function fillTasksCombo(tasks)
-  c_task:clear()
-  
-  for _tmp, taskName in ipairs(tasks) do
-    local item = ListBoxItem.new(taskName)
-    item.WorldID = getTaskWorldID(taskName)    
-    c_task:insertItem(item)
-  end
+	c_task:clear()
+	
+	if tasks then
+		for _tmp, taskName in ipairs(tasks) do
+			local item = ListBoxItem.new(taskName)
+			item.WorldID = DB.getTaskWorldID(taskName)   
+			c_task:insertItem(item)
+		end
+	end
 end
 
 -------------------------------------------------------------------------------
---заполнение списка самолетов
+--заполнение списка самолето?
 function fillAircraftsCombo()
 	function fill_combo(combo, t)  
         combo:clear()  
@@ -1597,17 +1886,17 @@ function fillAircraftsCombo()
 
         local num = 1
         
-        for i, type in ipairs(t) do
-            local DisplayName = DB.getDisplayNameByName(type)
+        for i, tbl in ipairs(t) do
+            local DisplayName = DB.getDisplayNameByName(tbl.type)
             local item = ListBoxItem.new(DisplayName)
-            item.type = type
+            item.type = tbl.type
             item.DisplayName = DisplayName
             item.index = i
             combo:insertItem(item)
           
-            if humanControlledAircrafts[type] ~= nil then
+            if humanControlledAircrafts[tbl.type] ~= nil then
                 item:setSkin(humanAircraftItemSkin)
-                curHumanControlledAircrafts[num] = type
+                curHumanControlledAircrafts[num] = tbl.type
                 num = num + 1
             end
         end
@@ -1616,7 +1905,7 @@ function fillAircraftsCombo()
 	if vdata.group and vdata.group.taskSelected then
 		fill_combo(c_type, country_task_aircraft_list[__view__][vdata.country][vdata.task])
 	else
-		fill_combo(c_type, country_task_aircraft_list[__view__][vdata.country][getDefaultTaskName()])
+		fill_combo(c_type, country_task_aircraft_list[__view__][vdata.country][DB.getDefaultTaskName()])
 	end
 end
 
@@ -1660,7 +1949,9 @@ end
 
 --обновление окна
 function update()
-	updateMisc() --обновление имени, пилота, пределов для номера самолета в звене 	
+	e_name:setSkin(eNameWhiteSkin)
+	e_pilot:setSkin(eNameWhiteSkin)
+	updateMisc() --обновление имен? пилота, пределов для номера самолета ?звен?	
 	updateCountry()
 
 	local group = vdata.group
@@ -1669,33 +1960,44 @@ function update()
         vdata.task = group.task
         hiddenCheckbox:setState(group.hidden)
 		uncontrolledCheckBox:setState(group.uncontrolled)
-		lateActivationCheckBox:setState(group.lateActivation)
+		cbHiddenOnPlanner:setState(group.hiddenOnPlanner)	
+		cbHiddenOnMFD:setState(group.hiddenOnMFD)	
+		lateActivationCheckBox:setState(group.lateActivation)		
 		e_group_condition:setEnabled(not group.lateActivation)
 		sp_probability:setEnabled(not group.lateActivation)
 		if not group.lateActivation then
 			e_group_condition:setText(group.condition)
 			sp_probability:setValue((group.probability or 1) * 100)
 		end
+		
+		cbUncontrollable:setState(vdata.group.uncontrollable or false)		
 	
         vdata.radioSet = group.radioSet
 		vdata.frequency = group.frequency or vdata.frequency
 		vdata.modulation = group.modulation or vdata.modulation
                 
         verifySingleInFlight(group.units[1].type)
-	
+
         updatePlayerSkill(vdata.skills[vdata.unit.cur])
         panel_route.vdata.unit = group.units[vdata.unit.cur]
         panel_route.update()
+		
+		updateModulation(vdata.frequency)
+		
+		if isFrequencyValid(vdata.group) and setModulationInComboList(vdata.group.modulation) == true then
+			e_frequency:setSkin(validFrequencyEditBoxSkin)
+		else
+			e_frequency:setSkin(invalidFrequencyEditBoxSkin)    
+		end
     end
 
-	fillTasksCombo(country_tasks[__view__][vdata.country]) -- заполняем контрол задач
-	updateTask()	-- обновляем контрол задач
+	fillTasksCombo(country_tasks[__view__][vdata.country]) -- заполняем контро?зада?
+	updateTask()	-- обновляем контро?зада?
 
-	fillAircraftsCombo() -- заполняем контрол типов ЛА
-	updateType()		-- обновляем контрол типов ЛА
-
-    fillSkillsList()	-- заполняем контрол скилов
-	updateSkill()	    -- обновляем контрол скилов
+	fillAircraftsCombo() -- заполняем контро?типо?ЛА
+	updateType()		-- обновляем контро?типо?ЛА
+	
+	updateSkill()	    -- обновляем контро?скилов
 	updatePilot()
 
 	fillComboCallsigns()
@@ -1704,10 +2006,12 @@ function update()
 
 	updateTaskComboBoxTheme()
 	updateAutoTask()
+	
+	updateVisibleUncontrollable()
 
     updateHeadingWidgets()
     updateHeading()
-	verifyTabs()
+	verifyTabs()		
 end
 
 function verifySingleInFlight(a_type)
@@ -1723,7 +2027,7 @@ function verifySingleInFlight(a_type)
 end    
         
 -------------------------------------------------------------------------------
---обновление цвета текста в списке задач: если задача ставится автоматом по типу ЛА - серый, если была выставлена вручную - черный
+--обновление цвет?текста ?списке зада? если задача ставит? автомато?по типу ЛА - серы? если была выставлена вручну?- черный
 function updateTaskComboBoxTheme()
 	local selectedItem = c_task:getSelectedItem()
 
@@ -1737,22 +2041,30 @@ function updateTaskComboBoxTheme()
 end
 
 -------------------------------------------------------------------------------
---обновление имени, пилота, пределов для номера самолета в звене
+--обновление имен? пилота, пределов для номера самолета ?звен?
 function updateMisc()
-	e_name:setText(vdata.name) 
+	if vdata.group then
+		e_name:setText(vdata.group.name) 
+	else
+		e_name:setText(module_mission.check_group_name(vdata.name)) 
+	end
 	sp_unit:setValue(vdata.unit.cur)
 	sp_unit:setRange(1, vdata.unit.number)
 	sp_of:setValue(vdata.unit.number) 		
 end
 
 -------------------------------------------------------------------------------
---обновление имени, пилота, пределов для номера самолета в звене
+--обновление имен? пилота, пределов для номера самолета ?звен?
 function updatePilot()
-	e_pilot:setText(vdata.pilots[vdata.unit.cur]) 
+	if vdata.group then
+		e_pilot:setText(vdata.group.units[vdata.unit.cur].name) 
+	else
+		e_pilot:setText(module_mission.getUnitName(e_name:getText())) 
+	end
 end
 
 -------------------------------------------------------------------------------
---обновление типов ЛА
+--обновление типо?ЛА
 function updateType()
     local isEnable = false
     local isEnableLast = false
@@ -1760,16 +2072,16 @@ function updateType()
 		isEnable = true
 	else
 		for k, v in pairs(country_task_aircraft_list[__view__][vdata.country][vdata.task]) do
-			if (v == vdata.type) then
+			if (v.type == vdata.type) then
 				isEnable = true
 			end   
             
-            if (v == last_data[__view__].type) then
+            if (v.type == last_data[__view__].type) then
 				isEnableLast = true
 			end     
 		end
 	end
-    
+	
     if isEnable == false then
         vdata.type = nil
     end
@@ -1778,7 +2090,7 @@ function updateType()
 		if (last_data[__view__].type ~= nil) and (isEnableLast == true) then
 			vdata.type = last_data[__view__].type
 		else
-			vdata.type = country_task_aircraft_list[__view__][vdata.country][vdata.task][1]
+			vdata.type = country_task_aircraft_list[__view__][vdata.country][vdata.task][1].type
 		end
 	end    
 
@@ -1788,7 +2100,7 @@ end
 
 function setTypeItem(a_type)    
     local counter = c_type:getItemCount() - 1
-		
+
     for i = 0, counter do
         local item = c_type:getItem(i)        
         if item.type == a_type then
@@ -1799,7 +2111,7 @@ function setTypeItem(a_type)
 end
 
 -------------------------------------------------------------------------------
---обновление задач
+--обновление зада?
 function updateTask()
     if country_task_aircraft_list[__view__][vdata.country][vdata.task] == nil then
         vdata.task = nil
@@ -1817,8 +2129,9 @@ function updateTask()
 end
 
 -------------------------------------------------------------------------------
---обновление скила
+--обновление скил?
 function updateSkill()
+	fillSkillsList()
 	if (vdata.skills ~= nil) then
 		if (vdata.skills[vdata.unit.cur] == nil) then
 			if ((last_data[__view__].skill ~= nil) and (isEnableSkill(last_data.skill))) then 
@@ -1842,7 +2155,7 @@ function updateSkill()
     end
     
 	c_skill:setText(vdata.skills[vdata.unit.cur])
-	last_data[__view__].skill		= vdata.skills[vdata.unit.cur] 
+	last_data[__view__].skill = vdata.skills[vdata.unit.cur] 
 	
 	panel_units_list.updateBtnPlayerUnit()
 end
@@ -1881,11 +2194,12 @@ function updateCallsignControls()
 		commCheckBox:setState(vdata.communication)
 		commCheckBox:onChange()
 		e_frequency:setText(vdata.frequency)
-		t_modulation:setText(cdata.modulationName[vdata.modulation])
+		--t_modulation:setText(cdata.modulationName[vdata.modulation])
+		updateModulation(vdata.frequency)
 	
         callsign = vdata.group.units[vdata.unit.cur].callsign
 	
-        if westernCountry then -- новая страна западная 
+        if westernCountry then -- новая страна западн? 
             local str = string.match(callsign, '%D+') or callsign          
             c_callsign:setText(str)
             e_callsignGroupNum:setText(string.match(callsign, '%d'))
@@ -1909,16 +2223,16 @@ function updateCallsignControls()
 end
 
 -------------------------------------------------------------------------------
---обновление при изменении самолета игрока
+--обновление пр?изменени?самолета игрока
 function updatePlayerSkill(skill)
     if vdata.group then
         if skill == crutches.getPlayerSkill() then 
-            -- уже есть юнит со скилом игрока, надо сбросить скил этого юнита и поставить скил игрока новому юниту
+            -- уж?есть юнит со скилом игрока, надо сбросить скил этог?юнит??поставит?скил игрока новому юнит?
             if module_mission.playerUnit then
                 module_mission.playerUnit.skill = humanSkills[1]
                 
                 if (module_mission.playerUnit ~= vdata.group.units[vdata.unit.cur]) then
-                    -- сбрасываем точки
+                    -- сбрасываем точк?
                     module_mission.remove_INUFixPoint_All(module_mission.playerUnit.boss)
                     module_mission.remove_NavTargetPoint_All(module_mission.playerUnit.boss)
                 end
@@ -1943,7 +2257,7 @@ end
 
 
 -------------------------------------------------------------------------------
---Обновление поворота юнита
+--Обновление поворота юнит?
 function updateHeading()
     local heading = 0
     if vdata.group then
@@ -1980,7 +2294,7 @@ function updateHeading()
 				local classInfo = MapWindow.getClassifierObject(unitMapObject.classKey)
 			
 				if classInfo and classInfo.rotatable then					
-					unitObj.angle = MapWindow.headingToAngle(vdata.group.units[k].heading) -- в объектах карты храним все в градусах
+					unitObj.angle = MapWindow.headingToAngle(vdata.group.units[k].heading) -- ?объектах карт?храним вс??градусах
 				
 					if k == 1 then
 						vdata.group.mapObjects.route.points[1].angle = MapWindow.headingToAngle(vdata.group.units[1].heading)												
@@ -2000,19 +2314,18 @@ end
 
 
 -------------------------------------------------------------------------------
---			Обработка действий контролов									 ---------------------------
+--			Обработк?действий контроло?								 ---------------------------
 -------------------------------------------------------------------------------
 
 -------------------------------------------------------------------------------
---увеличение числа самолетов в группе
+--увеличение числ?самолето??группе
 function onSpinUnitOf(self)
 	local n = self:getValue()
 	if n < vdata.unit.number then
 		for i = vdata.unit.number, n + 1, -1 do
-			table.remove(vdata.pilots, i)
 			table.remove(vdata.skills, i)
 			if vdata.group then
-				-- Нужно также удалить соответствующие юниты из миссии
+				-- Нужн?такж?удалит?соответствующи?юнит?из миссии
 				module_mission.remove_unit(vdata.group.units[i])
 			end
 		end
@@ -2026,30 +2339,38 @@ function onSpinUnitOf(self)
 		end
 		
 		if (vdata.group.route.points[1].helipadId) then	
-			bAddUnit = (numAddAircrafts <= mod_parking.getFreeParkingOnHelipad(vdata.group, vdata.group.route.points[1].helipadId))
+			bAddUnit = true --(numAddAircrafts <= mod_parking.getFreeParkingOnHelipad(vdata.group, vdata.group.route.points[1].helipadId))
 		end
 		
 		if bAddUnit then
-			for i=vdata.unit.number+1,n do
-				vdata.pilots[i] = cdata.pilotList[U.find_diff(cdata.pilotList, vdata.pilots)]
+			for i=vdata.unit.number+1,n do				
 				vdata.skills[i] = getSkillNewUnit(vdata.skills[vdata.unit.cur])
 				if vdata.group then
-					-- Нужно также добавить соответствующие юниты в миссию
+					-- Нужн?такж?добавить соответствующи?юнит??миссию
+					local name = module_mission.getUnitName(vdata.group.name)
 					local unit = module_mission.insert_unit(
 							vdata.group, vdata.type, 
-							vdata.skills[i], i)
+							vdata.skills[i], i, name)
 					U.copyTable(unit.payload, vdata.group.units[vdata.unit.cur].payload)
-					local name = module_mission.check_unit_name(vdata.pilots[#vdata.pilots])
-					module_mission.renameUnit(unit, name)
-					vdata.pilots[n] = name
+					
 					unit.livery_id = vdata.group.units[vdata.unit.cur].livery_id
 					
 					if vdata.group.units[vdata.unit.cur].Radio then
 						setDataRadio(unit, vdata.group.units[vdata.unit.cur])
+					else
+						setDataRadio(unit, getClientParamsforCopy(i))						
+					end
+					
+					if vdata.group.units[vdata.unit.cur].AddPropAircraft then
 						setDataAddProp(unit, vdata.group.units[vdata.unit.cur])
 					else
-						setDataRadio(unit, getClientParamsforCopy(i))
 						setDataAddProp(unit, getClientParamsforCopy(i))
+					end
+					
+					if vdata.group.units[vdata.unit.cur].dataCartridge then
+						--setDataAddDataCartridge(unit, vdata.group.units[vdata.unit.cur])
+					else
+						--setDataAddDataCartridge(unit, getClientParamsforCopy(i))
 					end
 				end
 			end
@@ -2066,13 +2387,13 @@ function onSpinUnitOf(self)
 		end
 	
 	end
+
 	vdata.unit.number = n
 	vdata.unit.cur = vdata.unit.number
 	sp_unit:setRange(1, vdata.unit.number)
 	sp_unit:setValue(vdata.unit.cur)
 
-    fillSkillsList()
-	updateSkill()	    -- обновляем контрол скилов
+	updateSkill()	    -- обновляем контро?скилов
 	updatePilot()	
 	updateCallsignControls() -- обновляем контролы позывных
 
@@ -2099,17 +2420,19 @@ function onSpinUnitOf(self)
 	end
 
 	verifyTabs()
+	updateVisibleUncontrolled()
+	updateVisibleUncontrollable()
 end
 
 -------------------------------------------------------------------------------
---переключение текущего самолета в группе
+--переключение текущего самолета ?группе
 function onSpinUnit(self)
 	vdata.unit.cur = self:getValue()
     local unit = vdata.group.units[vdata.unit.cur]
-    panel_loadout.update()  --выполнение занимает много времени #посмотреть
+    panel_loadout.update()  --выполнение занимает мног?времен?#посмотреть
 
     if vdata.group then
-        -- При переключении юнита нужно переключать и подсветку соответствующего объекта на карте
+        -- Пр?переключении юнит?нужн?переключат??подсветк?соответствующего объект?на карт?
         for i=1,vdata.unit.number do
             vdata.group.mapObjects.units[i].currColor = vdata.group.boss.boss.selectGroupColor
         end
@@ -2128,8 +2451,8 @@ function onSpinUnit(self)
         updateCallsignControls()-- обновляем контролы позывных
 		panel_units_list.updateRow(vdata.group, vdata.group.units[vdata.unit.cur])
     end
-	fillSkillsList()
-	updateSkill()	    -- обновляем контрол скилов
+
+	updateSkill()	    -- обновляем контро?скилов
 	updatePilot()	
     updateHeading()
 
@@ -2137,20 +2460,26 @@ function onSpinUnit(self)
 end
 
 -------------------------------------------------------------------------------
---изменение имени
+--изменени?имен?
 function onEditName(self)
     if vdata.group then
+		if module_mission.isGroupFreeName(self:getText()) ~= true then
+			self:setSkin(eNameRedSkin)
+		else
+			self:setSkin(eNameWhiteSkin)
+		end
 		vdata.name = module_mission.check_group_name(self:getText())
 		module_mission.renameGroup(vdata.group, vdata.name)
-		panel_units_list.updateRow(vdata.group, vdata.group.units[vdata.unit.cur])
+		panel_units_list.updateGroup(vdata.group)
 	else
 		vdata.name = self:getText()
 	end
 end
 
 -------------------------------------------------------------------------------
---изменение страны
+--изменени?страны
 function onComboCountry(self)
+	panel_route.changeCountryGroup(vdata.group,DB.country_by_name[vdata.country].WorldID, DB.country_by_name[self:getText()].WorldID)
 	vdata.country = self:getText()
 	changeCountry(vdata.country)
 	e_onboard_num:onChange()
@@ -2158,10 +2487,11 @@ function onComboCountry(self)
 	updateCountry() 
 	updateSkill()
     panel_route.update()
+	MapWindow.updateHiddenSelectedGroup()
 end
 
 -------------------------------------------------------------------------------
---изменение типа
+--изменени?типа
 function onComboType(self, item)
 	if vdata.type == self:getSelectedItem().type  then
 		return
@@ -2175,12 +2505,11 @@ function onComboType(self, item)
         end
 		changeType(vdata.type)
 		changeCallsign()
-		-- Пересоздаем объекты карты, поскольку изменились условные знаки.
+		-- Пересоздае?объект?карт? поскольк?изменились условные знак?
 		panel_payload.update()
 		panel_loadout.update()       
 	end
     
-	fillSkillsList()	
 	update()
 	if vdata.group then
 		panel_units_list.updateRow(vdata.group)
@@ -2188,7 +2517,7 @@ function onComboType(self, item)
 end
 
 -------------------------------------------------------------------------------
---изменение бортового номера
+--изменени?бортовог?номера
 function onEditOnboardNumber(self)
 	local nm = self:getText()
 	if vdata.group then
@@ -2210,10 +2539,9 @@ function verify(group)
 end
 
 -------------------------------------------------------------------------------
---попытка закрыть окно
+--попытк?закрыт?окно
 function onCloseAttempt(onCloseFunc)
-	if 	panel_route.window:isVisible() and
-		vdata.group ~= nil then
+	if 	panel_route.window:isVisible() and vdata.group ~= nil then		
 		panel_route.onCloseAttempt()
 		local routeVerifyResult = panel_route.verify(vdata.group.route, vdata.group.lateActivation)
 		local groupVerifyResult = verify(vdata.group)
@@ -2221,16 +2549,22 @@ function onCloseAttempt(onCloseFunc)
             
 		if verifyResult then
 			local handler = MsgWindow.error(verifyResult..'\n'..cdata.continue_question, cdata.error, cdata.ok, cdata.cancel)
-		
+			local result = false
             function handler:onChange(buttonText)
                 -- если не нажата кнопка OK, то окно me_aircraft не закроется
                 if buttonText == cdata.ok then
                     onCloseFunc()
+				else
+					window:setVisible(true)
 				end
+				result = true
             end
             
-			handler:show()
-            
+			handler:show() 
+
+			if not result then
+				window:setVisible(true)
+			end
 			return false
 		end
 	end
@@ -2249,7 +2583,7 @@ function onButtonClose(self)
 end
 
 -------------------------------------------------------------------------------
---изменение задачи
+--изменени?задачи
 function onComboTask(self)
 	if vdata.group then
 		vdata.group.taskSelected = true
@@ -2265,17 +2599,17 @@ function onComboTask(self)
     if vdata.group then
         vdata.group.task = vdata.task
         local changed = false
-        -- Если тип юнита не соответствует новой задаче, то нужно выбрать умалчиваемый.
+        -- Если ти?юнит?не соответствуе?ново?задаче, то нужн?выбрат?умалчиваемый.
         for i,unit in pairs(vdata.group.units) do
             local found = false
             for j,aircraft in pairs(country_task_aircraft_list[__view__][vdata.country][vdata.task]) do
-                if aircraft == unit.type then
+                if aircraft.type == unit.type then
                     found = true
                     break
                 end
             end
             if not found then
-                unit.type = country_task_aircraft_list[__view__][vdata.country][vdata.task][1]
+                unit.type = country_task_aircraft_list[__view__][vdata.country][vdata.task][1].type
                 unit.CLSID = DB.unit_by_type[unit.type].CLSID
 				vdata.type = unit.type
                 unit.Radio = nil
@@ -2287,7 +2621,7 @@ function onComboTask(self)
             for i,unit in pairs(vdata.group.units) do
                 unit.payload.pylons = {}
             end
-            -- Пересоздаем объекты карты, поскольку изменились условные знаки
+            -- Пересоздае?объект?карт? поскольк?изменились условные знак?
             changeType(vdata.type)
         end
         
@@ -2295,7 +2629,7 @@ function onComboTask(self)
         panel_targeting.update()
 		verifyTabs()
     else
-        vdata.type = country_task_aircraft_list[__view__][vdata.country][vdata.task][1]
+        vdata.type = country_task_aircraft_list[__view__][vdata.country][vdata.task][1].type
 		updateAutoTask()
         setTypeItem(vdata.type)
     end
@@ -2309,9 +2643,14 @@ function onComboTask(self)
 end
 
 -------------------------------------------------------------------------------
---изменение пилота
+--изменени?пилота
 function onEditPilot(self)
 	local name = self:getText()
+	if module_mission.isUnitFreeName(self:getText()) ~= true then
+		self:setSkin(eNameRedSkin)
+	else
+		self:setSkin(eNameWhiteSkin)
+	end
 	local group = vdata.group
 	if group then
 		local unit = group.units[vdata.unit.cur]
@@ -2321,18 +2660,19 @@ function onEditPilot(self)
 			name = newName
 			panel_units_list.updateRow(vdata.group, vdata.group.units[vdata.unit.cur])
 		end
+		vdata.group.units[vdata.unit.cur].name = name
 	end
-	vdata.pilots[vdata.unit.cur] = name
+	
 end
 
 -------------------------------------------------------------------------------
---изменение скила
+--изменени?скил?
 function onComboSkill(self)
 	local skill = self:getText()
 
 	if((vdata.skills[vdata.unit.cur] == crutches.getPlayerSkill()) 
 		and (skill ~= crutches.getPlayerSkill())) then
-		panel_failures.reset()			 -- сбрасываем неисправности
+		panel_failures.reset()			 -- сбрасываем неисправност?
     end   
     
     if (((vdata.skills[vdata.unit.cur] == crutches.getPlayerSkill()) 
@@ -2341,7 +2681,7 @@ function onComboSkill(self)
             and (skill ~= crutches.getClientSkill()))) then
             
         if vdata.group then  
-            --сбрасываем точки
+            --сбрасываем точк?
             module_mission.remove_INUFixPoint_All(vdata.group.units[vdata.unit.cur].boss)
             module_mission.remove_NavTargetPoint_All(vdata.group.units[vdata.unit.cur].boss)
         end
@@ -2368,6 +2708,7 @@ function onComboSkill(self)
 			panel_radio.update()
 			setDataRadio(vdata.group.units[vdata.unit.cur], getClientParamsforCopy(vdata.unit.cur))
 			setDataAddProp(vdata.group.units[vdata.unit.cur], getClientParamsforCopy(vdata.unit.cur))
+			--setDataAddDataCartridge(vdata.group.units[vdata.unit.cur], getClientParamsforCopy(vdata.unit.cur))
 		end
 
     end
@@ -2377,6 +2718,8 @@ function onComboSkill(self)
 	verifyTabs()
 
 	setDefaultRadio()
+	updateVisibleUncontrolled()
+	updateVisibleUncontrollable()
 end
 
 function setDataAddProp(a_targetUnit, a_sourceUnit)
@@ -2388,6 +2731,16 @@ function setDataAddProp(a_targetUnit, a_sourceUnit)
 	a_targetUnit.AddPropAircraft = {}
 	base.U.recursiveCopyTable(a_targetUnit.AddPropAircraft, a_sourceUnit.AddPropAircraft)
 end
+--[[
+function setDataAddDataCartridge(a_targetUnit, a_sourceUnit)
+	if a_sourceUnit == nil or a_sourceUnit.AddPropAircraft == nil
+		or a_targetUnit == nil then
+		return
+	end
+
+	a_targetUnit.dataCartridge = {}
+	base.U.recursiveCopyTable(a_targetUnit.dataCartridge, a_sourceUnit.dataCartridge)
+end]]
 
 function setDataRadio(a_targetUnit, a_sourceUnit)
 	if a_sourceUnit == nil or a_sourceUnit.Radio == nil
@@ -2423,7 +2776,7 @@ end
 
 
 -------------------------------------------------------------------------------
---изменение позывного
+--изменени?позывног?
 function onEditCallsign(self)
 	local nm  = self:getText()
 
@@ -2439,7 +2792,7 @@ function onEditCallsign(self)
 end
 
 -------------------------------------------------------------------------------
---изменение номера группы в западном позывном
+--изменени?номера группы ?западном позывном
 function onComboGroupNumCallsign(self)
 	local nm  = self:getText()
 
@@ -2461,7 +2814,7 @@ function onComboGroupNumCallsign(self)
 end
 
 -------------------------------------------------------------------------------
---изменение позывного (комбобокса)
+--изменени?позывног?(комбобокса)
 function onComboCallsign(self)
 	local firstUnit = vdata.group.units[1]
 	local text = self:getText()
@@ -2503,6 +2856,20 @@ function onLateActivation(self)
 end
 
 -------------------------------------------------------------------------------
+function onChange_cbHiddenOnPlanner(self)
+	if vdata.group then
+		vdata.group.hiddenOnPlanner = self:getState()
+	end
+end
+
+-------------------------------------------------------------------------------
+function onChange_cbHiddenOnMFD(self)
+	if vdata.group then
+		vdata.group.hiddenOnMFD = self:getState()
+	end
+end
+
+-------------------------------------------------------------------------------
 function onProbability(self)
 	if vdata.group then
 		vdata.group.probability = self:getValue() / 100
@@ -2517,7 +2884,7 @@ function onCondition(self)
 end
 
 ------------------------------------------
---изменение частоты
+--изменени?частот?
 function onEditFrequency(self)
 	local text = self:getText()
 	local textNew = string.gsub(text, "-", "")
@@ -2534,7 +2901,7 @@ function onEditFrequency(self)
 	if (vdata.group and vdata.group.units and vdata.unit 
 		and (DB.unit_by_type[vdata.group.units[vdata.unit.cur].type].panelRadio ~= nil))	then
 		panel_radio.update()
-        panel_radio.setConnectFrequency(frequency)
+		panel_radio.setConnectFrequency(frequency, vdata.group.modulation)
 	end
 end
 
@@ -2546,7 +2913,7 @@ function getCurUnit()
 end
 
 ------------------------------------------
---скил для нового юнита
+--скил для нового юнит?
 function getSkillNewUnit(skill)
     if (skill == crutches.getPlayerSkill()) then
         return defaultAiSkill
@@ -2564,32 +2931,28 @@ function GetGroupName(a_type)
     end    
 end
 
-------------------------------------------
---
-function GetUnitName(a_type)
-    if a_type == 'plane' then
-        return vdatas[ __views__[2] ].pilots[1]
-    else
-        return vdatas[ __views__[1] ].pilots[1]
-    end
-end
+
 
 ------------------------------------------
 --
-function setFrequency(a_frequency)
+function setFrequency(a_frequency, a_modulation)
 	vdata.frequency = a_frequency
 	vdata.radioSet = true
   
 	if vdata.group then
 		vdata.group.frequency = a_frequency
 		vdata.group.radioSet = true
+		updateModulation(a_frequency)
+		
+		if a_modulation == nil or a_modulation == false then
+			a_modulation = vdata.group.modulation
+		end
+		if isFrequencyValid(vdata.group) and setModulationInComboList(a_modulation) == true then
+			e_frequency:setSkin(validFrequencyEditBoxSkin)
+		else
+			e_frequency:setSkin(invalidFrequencyEditBoxSkin)    
+		end
 	end
-  
-  if isFrequencyValid(vdata.group) then
-    e_frequency:setSkin(validFrequencyEditBoxSkin)
-  else
-    e_frequency:setSkin(invalidFrequencyEditBoxSkin)    
-  end
 end
 
 function isVisible()
