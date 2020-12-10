@@ -32,26 +32,26 @@ local lastPreviewType
 
 -- by uboats
 local PylonObject = {
-  [1]  = {sceneobj = {}, pattached = 0, arg = 308, cnt = "Pylon1"},
-  [2]  = {sceneobj = {}, pattached = 0, arg = 309, cnt = "Pylon2"},
-  [3]  = {sceneobj = {}, pattached = 0, arg = 310, cnt = "Pylon3"},
-  [4]  = {sceneobj = {}, pattached = 0, arg = 311, cnt = "Pylon4"},
-  [5]  = {sceneobj = {}, pattached = 0, arg = 312, cnt = "Pylon5"},
-  [6]  = {sceneobj = {}, pattached = 0, arg = 313, cnt = "Pylon6"},
-  [7]  = {sceneobj = {}, pattached = 0, arg = 314, cnt = "Pylon7"},
-  [8]  = {sceneobj = {}, pattached = 0, arg = 315, cnt = "Pylon8"},
-  [9]  = {sceneobj = {}, pattached = 0, arg = 316, cnt = "Pylon9"},
-  [10] = {sceneobj = {}, pattached = 0, arg = 317, cnt = "Pylon10"},
-  [11] = {sceneobj = {}, pattached = 0, arg = 318, cnt = "Pylon11"},
-  [12] = {sceneobj = {}, pattached = 0, arg = 319, cnt = "Pylon12"},
-  [13] = {sceneobj = {}, pattached = 0, arg = 320, cnt = "Pylon13"},
-  [14] = {sceneobj = {}, pattached = 0, arg = 321, cnt = "Pylon14"},
-  [15] = {sceneobj = {}, pattached = 0, arg = 322, cnt = "Pylon15"},
-  [16] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon16"},
-  [17] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon17"},
-  [18] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon18"},
-  [19] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon19"},
-  [20] = {sceneobj = {}, pattached = 0, arg = -1,  cnt = "Pylon20"},
+  [1]  = {sceneobj = {}, pattached = 0, arg = 308, argtmp = -1, cnt = "Pylon1"},
+  [2]  = {sceneobj = {}, pattached = 0, arg = 309, argtmp = -1, cnt = "Pylon2"},
+  [3]  = {sceneobj = {}, pattached = 0, arg = 310, argtmp = -1, cnt = "Pylon3"},
+  [4]  = {sceneobj = {}, pattached = 0, arg = 311, argtmp = -1, cnt = "Pylon4"},
+  [5]  = {sceneobj = {}, pattached = 0, arg = 312, argtmp = -1, cnt = "Pylon5"},
+  [6]  = {sceneobj = {}, pattached = 0, arg = 313, argtmp = -1, cnt = "Pylon6"},
+  [7]  = {sceneobj = {}, pattached = 0, arg = 314, argtmp = -1, cnt = "Pylon7"},
+  [8]  = {sceneobj = {}, pattached = 0, arg = 315, argtmp = -1, cnt = "Pylon8"},
+  [9]  = {sceneobj = {}, pattached = 0, arg = 316, argtmp = -1, cnt = "Pylon9"},
+  [10] = {sceneobj = {}, pattached = 0, arg = 317, argtmp = -1, cnt = "Pylon10"},
+  [11] = {sceneobj = {}, pattached = 0, arg = 318, argtmp = -1, cnt = "Pylon11"},
+  [12] = {sceneobj = {}, pattached = 0, arg = 319, argtmp = -1, cnt = "Pylon12"},
+  [13] = {sceneobj = {}, pattached = 0, arg = 320, argtmp = -1, cnt = "Pylon13"},
+  [14] = {sceneobj = {}, pattached = 0, arg = 321, argtmp = -1, cnt = "Pylon14"},
+  [15] = {sceneobj = {}, pattached = 0, arg = 322, argtmp = -1, cnt = "Pylon15"},
+  [16] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon16"},
+  [17] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon17"},
+  [18] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon18"},
+  [19] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon19"},
+  [20] = {sceneobj = {}, pattached = 0, arg = -1,  argtmp = -1, cnt = "Pylon20"},
 }
 -- end by uboats
 
@@ -596,8 +596,14 @@ function cleanPylonModel()
     if sceneAPI then
         for i, pylonobj in pairs(PylonObject) do
             arg_id = PylonObject[i].arg
-            if DSWidget and DSWidget.modelObj and DSWidget.modelObj.valid == true and arg_id > 0 then
-                DSWidget.modelObj:setArgument(arg_id, 0)
+            if DSWidget and DSWidget.modelObj and DSWidget.modelObj.valid == true then
+                if PylonObject[i].arg > 0 then
+                    DSWidget.modelObj:setArgument(PylonObject[i].arg, 0)
+                end
+                if PylonObject[i].argtmp > 0 then
+                    DSWidget.modelObj:setArgument(PylonObject[i].argtmp, 0)
+                    PylonObject[i].argtmp = -1
+                end
             end
             if #PylonObject[i].sceneobj > 0 then
                 for j, sceobj in pairs(PylonObject[i].sceneobj) do
@@ -739,6 +745,7 @@ function showPylonModel(a_type, shape)
                 -- draw station arg
                 if arg_id > 0 then
                     DSWidget.modelObj:setArgument(arg_id, arg_val)
+                    PylonObject[i].argtmp = arg_id
                 end
                 
                 -- add and attach loadout model
