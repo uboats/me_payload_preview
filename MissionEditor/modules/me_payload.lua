@@ -632,6 +632,7 @@ function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
         dbg_print("payload preview: attach to "..pcnt)
         PylonObject[i].sceneobj[numobj + 1]:attachTo(pobj, pcnt)
         
+        --[[
         if element then
             if element.Position then
                 lx = element.Position[1] or 0
@@ -646,6 +647,7 @@ function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
         end
         
         PylonObject[i].sceneobj[numobj + 1].transform.move(PylonObject[i].sceneobj[numobj + 1],posx,posy,posz)
+        ]]
     else
         if unitdef.Pylons[i] then
             posx = unitdef.Pylons[i].X or posx
@@ -670,7 +672,6 @@ function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
 
         if DSWidget and DSWidget.modelObj and DSWidget.modelObj.valid == true then
             local x0,y0,z0,x1,y1,z1 = DSWidget.modelObj:getBBox()
-            --DSWidget.modelObj.transform:setPosition(-(x0+x1)*0.5, base.preview.objectHeight - (y0+y1)*0.5, -(z0+z1)*0.5)
             posx = posx - (x0+x1)*0.5
             posy = posy + base.preview.objectHeight - (y0+y1)*0.5
             posz = posz - (z0+z1)*0.5
