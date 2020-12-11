@@ -765,6 +765,8 @@ function showPylonModel(a_type, shape)
                     cntid = 1
                     if base.string.match(a_type, "Su-25") then
                         cntid = 2
+                    elseif base.string.match(a_type, "AJS37") then
+                        cntid = 2
                     elseif base.string.match(a_type, "A-10") then
                         cntid = 3
                     end
