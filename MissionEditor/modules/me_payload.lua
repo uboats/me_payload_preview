@@ -681,8 +681,9 @@ function attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
     end
 end
 
-function fixPylonModel(shape, i, numobj, unitdef, element, pobj, pcnt)
-    local sname = shape
+function fixPylonModelElement(shape, i, numobj, unitdef, element, pobj, pcnt)
+    local sobj     = nil
+    local sname    = shape
     local sceneAPI = DSWidget:getScene()
     if sceneAPI and shape and shape ~= "" then
         if base.ModsShapeTableByShapeName then
@@ -696,9 +697,9 @@ function fixPylonModel(shape, i, numobj, unitdef, element, pobj, pcnt)
                     dbg_print("modshape fixed name "..wpn_tbl.file)
                     
                     sname = wpn_tbl.file
-                    tmpobj = sceneAPI:addModel(wpn_tbl.file, 0, 0, 0)
-                    if tmpobj and tmpobj.valid == true then
-                        attachPylonModelElement(i, numobj, tmpobj, unitdef, element, pobj, pcnt)
+                    sobj = sceneAPI:addModel(wpn_tbl.file, 0, 0, 0)
+                    if sobj and sobj.valid == true then
+                        attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
                     else
                         dbg_print("payload preview warning: fix model failed: "..wpn_tbl.file)
                     end
@@ -706,7 +707,24 @@ function fixPylonModel(shape, i, numobj, unitdef, element, pobj, pcnt)
             end
         end
     end
-    return sname
+    return sname, sobj
+end
+
+function attachPylonModelWrapper(shape, i, numobj, unitdef, element, pobj, pcnt)
+    tobj = nil
+
+    local sceneAPI = DSWidget:getScene()
+    if sceneAPI then
+        tobj = sceneAPI:addModel(shape, 0, 0, 0)
+        if tobj and tobj.valid == true then
+            attachPylonModelElement(i, numobj, tobj, unitdef, element, pobj, pcnt)
+        else
+            dbg_print("payload preview warning: add elem model failed: "..shape)
+            tname, tobj = fixPylonModelElement(shape, i, numobj, unitdef, element, pobj, pcnt)
+        end
+    end
+    
+    return tobj
 end
 
 function showPylonModel(a_type, shape)
@@ -727,8 +745,8 @@ function showPylonModel(a_type, shape)
     if unitDef and shape and shape2 and shape == shape2 then
         dbg_print("payload preview aircraft: "..a_type.." shape "..shape)
         
-        if vdata.unit.payload.pylonslauncher then
-            for i, lncher in pairs(vdata.unit.payload.pylonslauncher) do
+        if vdata.unit.payload.pl_lnchers then
+            for i, lncher in pairs(vdata.unit.payload.pl_lnchers) do
             
                 arg_id   = -1
                 arg_val  = 0
@@ -761,6 +779,9 @@ function showPylonModel(a_type, shape)
                 if --[[base.string.match(a_type, "Su-25") or]] base.string.match(a_type, "A-10") then
                     use_pcnt = true
                 end
+                if base.string.match(a_type, "A-10C_2") then
+                    use_pcnt = false
+                end
                 if use_pcnt == true then
                     cntid = 1
                     if base.string.match(a_type, "Su-25") then
@@ -792,15 +813,16 @@ function showPylonModel(a_type, shape)
                     
                     dbg_print("payload preview "..shape..": lncher "..i.." pfile branch: "..modelshape)
                     
-                    tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
+                    tmpobj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, nil, DSWidget.modelObj, pcnt)
+                    --[[tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
                     if tmpobj and tmpobj.valid == true then
                         --attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
                         attachPylonModelElement(i, numobj, tmpobj, unitDef, nil, DSWidget.modelObj, pcnt)
                         
                     else
                         dbg_print("payload preview warning: add pfile model failed: "..modelshape)
-                        tmpname = fixPylonModel(modelshape, i, numobj, unitDef, nil, DSWidget.modelObj, pcnt)
-                    end
+                        tmpname, tmpobj = fixPylonModelElement(modelshape, i, numobj, unitDef, nil, DSWidget.modelObj, pcnt)
+                    end]]
                 
                 elseif lncher.Elements_new then -- for normal declare loadout element
                     dbg_print("payload preview "..shape..": lncher "..i.." element branch: "..#lncher.Elements_new)
@@ -815,7 +837,8 @@ function showPylonModel(a_type, shape)
                                 local numobj     = #PylonObject[i].sceneobj
                                 
                                 if modelshape ~= nil and modelshape ~= "" then
-                                    adaptor_obj = sceneAPI:addModel(modelshape, 0, 0, 0)
+                                    adaptor_obj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, element, DSWidget.modelObj, pcnt)
+                                    --[[adaptor_obj = sceneAPI:addModel(modelshape, 0, 0, 0)
                                     if adaptor_obj and adaptor_obj.valid == true then
                                         adaptor_name = modelshape
 
@@ -825,8 +848,8 @@ function showPylonModel(a_type, shape)
                                         break -- find valid adaptor, then break loop
                                     else
                                         dbg_print("payload preview warning: add adaptor model failed: "..modelshape)
-                                        adaptor_name = fixPylonModel(modelshape, i, numobj, unitDef, element, DSWidget.modelObj, pcnt)
-                                    end
+                                        adaptor_name, adaptor_obj = fixPylonModelElement(modelshape, i, numobj, unitDef, element, DSWidget.modelObj, pcnt)
+                                    end]]
                                 end
                             end
                         end
@@ -840,51 +863,115 @@ function showPylonModel(a_type, shape)
                     for j, element in pairs(lncher.Elements_new) do
                         local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
                         if notadaptor then
-                            elem_new = element
                             
-                            if elem_new.ShapeName then -- use explicit element
-                                local modelshape = nil
-                                local numobj     = #PylonObject[i].sceneobj
-                                
-                                if lncher.shape_table_data then
-                                    for tt, shapetbl in pairs(lncher.shape_table_data) do
-                                        if shapetbl.name == elem_new.ShapeName then
-                                            modelshape = shapetbl.file
-                                            --dbg_print(i.." lnch find load model: "..modelshape)
+                            if element.payload_CLSID then -- use macro clsid
+                                elems_new = base.get_weapon_element_by_clsid(element.payload_CLSID)
+                                if elems_new then
+                                    sub_adaptor_name = ""
+                                    sub_adaptor_obj  = nil
+                                    for k, elem_new in pairs(elems_new) do
+                                        if elem_new.ShapeName then
+                                            local modelshape = elem_new.ShapeName
+                                            local numobj     = #PylonObject[i].sceneobj
+                                            if k == 1 then -- can be sub adaptor
+                                                pobj_new = DSWidget.modelObj
+                                                pcnt_new = pcnt
+
+                                                if element.connector_name and element.connector_name ~= "" then
+                                                    pcnt_new = element.connector_name
+                                                    if adaptor_obj ~= nil then
+                                                        pobj_new = adaptor_obj
+                                                    end
+                                                end
+                                                
+                                                sub_adaptor_obj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                                --[[sub_adaptor_obj = sceneAPI:addModel(modelshape, 0, 0, 0)
+                                                if sub_adaptor_obj and sub_adaptor_obj.valid == true then
+                                                    sub_adaptor_name = modelshape
+                                                    attachPylonModelElement(i, numobj, sub_adaptor_obj, unitDef, elem_new, pobj_new, pcnt_new)
+                                                else
+                                                    dbg_print("payload preview warning: add sub adaptor model failed: "..modelshape)
+                                                    sub_adaptor_name, sub_adaptor_obj = fixPylonModelElement(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                                end]]
+                                            else -- sub elements
+                                                pobj_new = DSWidget.modelObj
+                                                pcnt_new = pcnt
+
+                                                if element.connector_name and element.connector_name ~= "" then
+                                                    pcnt_new = element.connector_name
+                                                    if adaptor_obj ~= nil then
+                                                        pobj_new = adaptor_obj
+                                                    end
+                                                end 
+                                                
+                                                if elem_new.connector_name and elem_new.connector_name ~= "" then
+                                                    pcnt_new = elem_new.connector_name
+                                                    if sub_adaptor_obj ~= nil then
+                                                        pobj_new = sub_adaptor_obj
+                                                    end
+                                                end
+                                                
+                                                tmpobj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                                --[[tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
+                                                if tmpobj and tmpobj.valid == true then
+                                                    attachPylonModelElement(i, numobj, tmpobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                                else
+                                                    dbg_print("payload preview warning: add sub elem model failed: "..modelshape)
+                                                    tmpname, tmpobj = fixPylonModelElement(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                                end]]
+                                                
+                                            end
                                         end
                                     end
                                 end
+                            else
+                                -- normal sub loadout
+                                elem_new = element
+                                if elem_new.ShapeName then -- use explicit element
+                                    local modelshape = nil
+                                    local numobj     = #PylonObject[i].sceneobj
 
-                                if not modelshape then
-                                    modelshape = elem_new.ShapeName or lncher.cfile
-                                end
-
-                                if modelshape ~= nil and modelshape ~= "" then
-                                    pobj_new = DSWidget.modelObj
-                                    pcnt_new = pcnt
-                                    if elem_new.connector_name and elem_new.connector_name ~= "" then
-                                        pcnt_new = elem_new.connector_name
-                                        if adaptor_obj ~= nil then
-                                            pobj_new = adaptor_obj
+                                    if lncher.shape_table_data then
+                                        for tt, shapetbl in pairs(lncher.shape_table_data) do
+                                            if shapetbl.name == elem_new.ShapeName then
+                                                modelshape = shapetbl.file
+                                                --dbg_print(i.." lnch find load model: "..modelshape)
+                                            end
                                         end
                                     end
-                                    
-                                    tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
-                                    if tmpobj and tmpobj.valid == true then
-                                        --attachPylonModelElement(i, numobj, sobj, unitdef, element, pobj, pcnt)
-                                        attachPylonModelElement(i, numobj, tmpobj, unitDef, elem_new, pobj_new, pcnt_new)
-                                    else
-                                        dbg_print("payload preview warning: add elem model failed: "..modelshape)
-                                        tmpname = fixPylonModel(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
+
+                                    if not modelshape then
+                                        modelshape = elem_new.ShapeName or lncher.cfile
                                     end
 
-                                end
+                                    if modelshape ~= nil and modelshape ~= "" then
+                                        pobj_new = DSWidget.modelObj
+                                        pcnt_new = pcnt
 
-                            end -- if element.ShapeName
+                                        if elem_new.connector_name and elem_new.connector_name ~= "" then
+                                            pcnt_new = elem_new.connector_name
+                                            if adaptor_obj ~= nil then
+                                                pobj_new = adaptor_obj
+                                            end
+                                        end
+
+                                        tmpobj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                        --[[tmpobj = sceneAPI:addModel(modelshape, 0, 0, 0)
+                                        if tmpobj and tmpobj.valid == true then
+                                            attachPylonModelElement(i, numobj, tmpobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                        else
+                                            dbg_print("payload preview warning: add elem model failed: "..modelshape)
+                                            tmpname, tmpobj = fixPylonModelElement(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
+                                        end]]
+
+                                    end
+
+                                end -- if element.ShapeName
+                            end
                         end -- if notadaptor
-                                           
-                    end -- pairs(lncher.Elements_new)                    
-                end                
+                        
+                    end -- pairs(lncher.Elements_new)
+                end
 
             end
         end
@@ -940,7 +1027,6 @@ function setPreviewType(a_type)
 	
     
     local sceneAPI = DSWidget:getScene()	
-    
     if DSWidget.modelObj ~= nil and DSWidget.modelObj.obj ~= nil then
         cleanPylonModel() -- by uboats
         sceneAPI.remove(DSWidget.modelObj)

@@ -254,7 +254,8 @@ function get_weapon_launcher_by_clsid(clsid)
         end
         
         if lnchr.Elements then
-            Elements_new = {}
+            lnchr.Elements_new = lnchr.Elements
+            --[[Elements_new = {}
             for j, element in pairs(lnchr.Elements) do
                 local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
                 if notadaptor then
@@ -265,12 +266,13 @@ function get_weapon_launcher_by_clsid(clsid)
                                 if elem_new.ShapeName then
                                     dbg_print("macro clsid: "..element.payload_CLSID.." get "..k.." "..elem_new.ShapeName)
                                     
-                                    if elem_new.IsAdapter and elem_new.IsAdapter == true then
+                                    if (elem_new.IsAdapter and elem_new.IsAdapter == true) or (k == 1) then
                                         elem_new.IsAdapter = false
-                                        if element.connector_name then
-                                            elem_new.connector_name = element.connector_name
-                                            dbg_print("             "..element.payload_CLSID.." get "..k.." "..elem_new.connector_name)
-                                        end
+                                        elem_new.IsSubAdapter = true
+                                    end
+                                    if element.connector_name then
+                                        elem_new.connector_name = element.connector_name
+                                        dbg_print("             "..element.payload_CLSID.." get "..k.." "..elem_new.connector_name)
                                     end
                                     Elements_new[#Elements_new + 1] = elem_new
                                 end
@@ -282,22 +284,9 @@ function get_weapon_launcher_by_clsid(clsid)
                 else
                     Elements_new[#Elements_new + 1] = element
                 end
-                
-                --[[
-                if weapons_table.weapons.missiles[Elements_new[#Elements_new].ShapeName] then
-                    shptble = weapons_table.weapons.missiles[Elements_new[#Elements_new + 1].ShapeName].shape_table_data
-                    if shptble then
-                        for k, shpitem in pairs(shptble) do
-                            if shpitem.name == Elements_new[#Elements_new + 1].ShapeName then
-                                Elements_new[#Elements_new + 1].ShapeName = shpitem.file
-                            end
-                        end
-                    end
-                end
-                ]]
             end
             lnchr.Elements_new = {}
-            lnchr.Elements_new = Elements_new
+            lnchr.Elements_new = Elements_new]]
         end
         
         local attr = lnchr.attribute
