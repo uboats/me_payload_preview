@@ -255,38 +255,6 @@ function get_weapon_launcher_by_clsid(clsid)
         
         if lnchr.Elements then
             lnchr.Elements_new = lnchr.Elements
-            --[[Elements_new = {}
-            for j, element in pairs(lnchr.Elements) do
-                local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
-                if notadaptor then
-                    if element.payload_CLSID then -- use macro clsid
-                        elems_new = get_weapon_element_by_clsid(element.payload_CLSID)
-                        if elems_new then
-                            for k, elem_new in pairs(elems_new) do
-                                if elem_new.ShapeName then
-                                    dbg_print("macro clsid: "..element.payload_CLSID.." get "..k.." "..elem_new.ShapeName)
-                                    
-                                    if (elem_new.IsAdapter and elem_new.IsAdapter == true) or (k == 1) then
-                                        elem_new.IsAdapter = false
-                                        elem_new.IsSubAdapter = true
-                                    end
-                                    if element.connector_name then
-                                        elem_new.connector_name = element.connector_name
-                                        dbg_print("             "..element.payload_CLSID.." get "..k.." "..elem_new.connector_name)
-                                    end
-                                    Elements_new[#Elements_new + 1] = elem_new
-                                end
-                            end
-                        end
-                    else
-                        Elements_new[#Elements_new + 1] = element
-                    end
-                else
-                    Elements_new[#Elements_new + 1] = element
-                end
-            end
-            lnchr.Elements_new = {}
-            lnchr.Elements_new = Elements_new]]
         end
         
         local attr = lnchr.attribute
