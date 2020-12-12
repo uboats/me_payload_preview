@@ -57,7 +57,6 @@ function create_names()
 	{
 		types = {},
 		sht   = {},
-		shtfile = {}, -- by uboats
 	}
 	for i,lnchr in pairs(db.Weapons.ByCLSID) do
 	   local ws_type  = lnchr.attribute
@@ -114,19 +113,12 @@ function create_names()
 	
 	for key,sht_tbl in pairs(tmp_env) do
 		weapons_names.sht[key] = {}
-		weapons_names.shtfile[key] = {} -- by uboats
 		local i = 1
 		while sht_tbl[i] do
 			local ind = sht_tbl[i].index
 			local str = sht_tbl[i].username
-			local file = sht_tbl[i].file -- by uboats
 			if str and ind then
 			   weapons_names.sht[key][ind] = str
-               -- by uboats
-               if file then
-                   weapons_names.shtfile[key][ind] = file
-               end
-               -- end by uboats
 			end
 			i = i + 1
 		end
@@ -237,7 +229,7 @@ function dbg_print(s)
     base.print(s)
 end
     
-function get_weapon_element_by_clsid(clsid) -- not used
+function get_weapon_element_by_clsid(clsid)
 	local lnchr = db.Weapons.ByCLSID[clsid]
 	if lnchr then
 	   return lnchr.Elements or nil
@@ -248,73 +240,8 @@ end
 function get_weapon_launcher_by_clsid(clsid)
 	local lnchr = db.Weapons.ByCLSID[clsid]
 
-	if lnchr and lnchr.attribute then
-        if not weapons_names then
-           create_names()
-        end
-        
-        if lnchr.Elements then
-            lnchr.Elements_new = lnchr.Elements
-        end
-        
-        local attr = lnchr.attribute
-        local pname = ""
-        
-        if attr[1] == wsType_Air then
-            if attr[2] == wsType_Free_Fall then
-               pname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-            end
-        elseif attr[1] == wsType_Weapon then
-            if attr[2] == wsType_Missile or attr[2] == wsType_NURS then
-                if attr[3] == wsType_Container then
-                    pname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-                else
-                    pname = weapons_names.shtfile.MissileTable[attr[4]] or ""
-                end
-            
-            elseif attr[2] == wsType_Bomb then
-                if attr[3] == wsType_Container then
-                    pname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-                else
-                    pname = weapons_names.shtfile.BombTable[attr[4]] or ""
-                end
-            
-            elseif attr[2] == wsType_GContainer then
-                pname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-            end
-        end
-        lnchr.pfile = pname
-        
-        local wstype = lnchr.wsTypeOfWeapon
-        local cname = ""
-        
-        if wstype then
-            if attr[1] == wsType_Air then
-                if attr[2] == wsType_Free_Fall then
-                   cname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-                end
-            elseif attr[1] == wsType_Weapon then
-                if attr[2] == wsType_Missile or attr[2] == wsType_NURS then
-                    if attr[3] == wsType_Container then
-                        cname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-                    else
-                        cname = weapons_names.shtfile.MissileTable[attr[4]] or ""
-                    end
-                
-                elseif attr[2] == wsType_Bomb then
-                    if attr[3] == wsType_Container then
-                        cname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-                    else
-                        cname = weapons_names.shtfile.BombTable[attr[4]] or ""
-                    end
-                
-                elseif attr[2] == wsType_GContainer then
-                    cname = weapons_names.shtfile.ContainerTable[attr[4]] or ""
-                end
-            end
-        end
-        lnchr.cfile = cname
-        
+	if lnchr and lnchr.Elements then
+        lnchr.Elements_new = lnchr.Elements        
         return lnchr
 	end
     

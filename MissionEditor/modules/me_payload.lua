@@ -924,7 +924,7 @@ function showPylonModel(a_type, shape)
                                     end
 
                                     if modelshape == nil then
-                                        modelshape = elem_new.ShapeName or lncher.cfile
+                                        modelshape = elem_new.ShapeName
                                     end
 
                                     if modelshape ~= nil and modelshape ~= "" then
