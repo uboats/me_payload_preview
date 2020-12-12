@@ -776,14 +776,14 @@ function showPylonModel(a_type, shape)
                     arg_id = PylonObject[i].arg
                 end
                 
-                if --[[base.string.find(a_type, "Su-25") or]] base.string.find(a_type, "A-10") then
+                if base.string.find(a_type, "A-10") then
                     use_pcnt = true
                 end
                 
                 to_disable_pcnt = false
                 if "A-10C_2" == a_type then
                     to_disable_pcnt = true
-                elseif --[[base.string.find(a_type, "OH-58D")]] "OH-58D" == a_type then
+                elseif "OH-58D" == a_type then
                     to_disable_pcnt = true
                 end
                 if to_disable_pcnt then
@@ -796,7 +796,9 @@ function showPylonModel(a_type, shape)
                     cntid = 1
                     if base.string.find(a_type, "Su-25") then
                         cntid = 2
-                    elseif base.string.find(a_type, "AJS37") then
+                    elseif "Mi-8MT" == a_type then
+                        cntid = 2
+                    elseif "AJS37" == a_type then
                         cntid = 2
                     elseif base.string.find(a_type, "A-10") then
                         cntid = 3
