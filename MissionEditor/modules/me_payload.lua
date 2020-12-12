@@ -828,13 +828,13 @@ function showPylonModel(a_type, shape)
                     tname, tmpobj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, nil, DSWidget.modelObj, pcnt)
                 
                 else]]
-                if lncher.Elements_new then -- for normal declare loadout element
-                    dbg_print("payload preview "..a_type..": lncher "..i.." element branch: "..#lncher.Elements_new)
+                if lncher.Elements then -- for normal declare loadout element
+                    dbg_print("payload preview "..a_type..": lncher "..i.." element branch: "..#lncher.Elements)
                 
                     -- first traverse adaptor
                     adaptor_name = ""
                     adaptor_obj = nil
-                    for j, element in pairs(lncher.Elements_new) do
+                    for j, element in pairs(lncher.Elements) do
                         if element.IsAdapter ~= nil and element.IsAdapter == true then
                             if element.ShapeName then
                                 local modelshape = element.ShapeName
@@ -852,12 +852,17 @@ function showPylonModel(a_type, shape)
                     end
                 
                     -- traverse non adaptor
-                    for j, element in pairs(lncher.Elements_new) do
+                    for j, element in pairs(lncher.Elements) do
                         local notadaptor = element.IsAdapter == nil or (element.IsAdapter ~= nil and element.IsAdapter == false)
                         if notadaptor then
                             
                             if element.payload_CLSID then -- use macro clsid
-                                elems_new = base.get_weapon_element_by_clsid(element.payload_CLSID)
+                                --elems_new = base.get_weapon_element_by_clsid(element.payload_CLSID)
+                                lncher_new = base.db.Weapons.ByCLSID[element.payload_CLSID]
+                                elems_new = nil
+                                if lncher_new and lncher_new.Elements then
+                                    elems_new = lncher_new.Elements
+                                end
                                 if elems_new then
                                     sub_adaptor_name = ""
                                     sub_adaptor_obj  = nil
@@ -951,7 +956,7 @@ function showPylonModel(a_type, shape)
                             end
                         end -- if notadaptor
                         
-                    end -- pairs(lncher.Elements_new)
+                    end -- pairs(lncher.Elements)
                 end
 
             end

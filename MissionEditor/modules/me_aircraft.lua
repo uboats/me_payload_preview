@@ -1226,7 +1226,7 @@ function setUnitPayload(pylons, payloadName)
     unit.payload.pl_lnchers = {} -- by uboats
     for pylonNumber, launcherCLSID in pairs(pylons) do
       unit.payload.pylons[pylonNumber] = {CLSID = launcherCLSID}
-      unit.payload.pl_lnchers[pylonNumber] = base.get_weapon_launcher_by_clsid(launcherCLSID) -- by uboats
+      unit.payload.pl_lnchers[pylonNumber] = base.db.Weapons.ByCLSID[launcherCLSID] -- by uboats
     end
   end
 end
