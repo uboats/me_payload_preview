@@ -883,6 +883,11 @@ function showPylonModel(a_type, shape)
                                                 
                                                 sub_adaptor_name, sub_adaptor_obj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new)
                                                 
+                                                if sub_adaptor_obj and elem_new.DrawArgs then
+                                                    for m, draw_arg in pairs(elem_new.DrawArgs) do
+                                                        sub_adaptor_obj:setArgument(draw_arg[1], draw_arg[2])
+                                                    end
+                                                end
                                             else -- sub elements
                                                 pobj_new = DSWidget.modelObj
                                                 pcnt_new = pcnt
@@ -910,6 +915,11 @@ function showPylonModel(a_type, shape)
                                                 use_bias = use_bias1 and use_bias2
                                                 tname, tmpobj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new, use_bias)
                                                 
+                                                if tmpobj and elem_new.DrawArgs then
+                                                    for m, draw_arg in pairs(elem_new.DrawArgs) do
+                                                        tmpobj:setArgument(draw_arg[1], draw_arg[2])
+                                                    end
+                                                end
                                             end
                                         end
                                     end
@@ -950,6 +960,11 @@ function showPylonModel(a_type, shape)
 
                                         tname, tmpobj = attachPylonModelWrapper(modelshape, i, numobj, unitDef, elem_new, pobj_new, pcnt_new, use_bias)
 
+                                        if tmpobj and elem_new.DrawArgs then
+                                            for m, draw_arg in pairs(elem_new.DrawArgs) do
+                                                tmpobj:setArgument(draw_arg[1], draw_arg[2])
+                                            end
+                                        end
                                     end
 
                                 end -- if element.ShapeName
